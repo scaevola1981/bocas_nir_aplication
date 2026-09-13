@@ -7,7 +7,7 @@ export async function fetchDefaultExcelFile() {
     const buffer = await res.arrayBuffer();
     return {
       handle: null,
-      fileName: 'Document de lucru.xlsx',
+      fileName: 'Registru_Gestiune.xlsx',
       buffer,
       isLocalApi: true,
       isNativeHandle: false
@@ -116,7 +116,7 @@ export async function saveExcelFile(workbook, fileState) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = fileState?.fileName || 'Document de lucru (actualizat).xlsx';
+  a.download = fileState?.fileName || 'Registru_Gestiune_Actualizat.xlsx';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

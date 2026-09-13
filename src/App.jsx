@@ -250,7 +250,7 @@ export function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = excelState.fileName || 'Document de lucru.xlsx';
+    a.download = excelState.fileName || 'Registru_Gestiune.xlsx';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
