@@ -135,7 +135,7 @@ function parseStructuredLines(lines) {
       // Check if last middle token is a UM code (BUC, ML, KG, KGM, H87, MTR, LTR, etc.)
       if (nameTokens.length > 0) {
         const candidateUm = nameTokens[nameTokens.length - 1];
-        if (/^(BUC\.?|ML\.?|KG\.?|KGM|H87|MTR|LTR|SET|PCE|BUC)$/i.test(candidateUm)) {
+        if (/^(BUC\.?|ML\.?|KG\.?|KGM|H87|MTR|LTR|SET|PCE|BUC|MTQ|MTK|MC\.?|MP\.?|L\.?|C62|PR)$/i.test(candidateUm)) {
           um = mapUnitCode(candidateUm);
           nameTokens.pop();
         }

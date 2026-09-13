@@ -159,7 +159,7 @@ export function NirReviewModal({
                       />
                     </td>
                     <td className={styles.valCell}>
-                      {Number((item.quantity * item.unitPrice).toFixed(2))} lei
+                      {Number(item.totalWithoutVat !== undefined ? item.totalWithoutVat : (item.quantity * item.unitPrice)).toFixed(2)} lei
                     </td>
                     <td className={styles.centerCell}>
                       <span className={styles.codBadge}>{assignedCod}</span>

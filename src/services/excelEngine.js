@@ -281,11 +281,17 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
     const r = 15 + idx;
     item.assignedCod = currentCod;
 
+    const effectiveUnitPrice = (item.totalWithoutVat && item.quantity)
+      ? (Math.abs(item.quantity * item.unitPrice - item.totalWithoutVat) > 0.005
+          ? Number((item.totalWithoutVat / item.quantity).toFixed(4))
+          : Number(item.unitPrice))
+      : Number(item.unitPrice);
+
     newSheet.getCell(`A${r}`).value = idx + 1;
     newSheet.getCell(`B${r}`).value = item.name;
     newSheet.getCell(`C${r}`).value = item.um || 'BUC.';
     newSheet.getCell(`D${r}`).value = Number(item.quantity);
-    newSheet.getCell(`E${r}`).value = Number(item.unitPrice);
+    newSheet.getCell(`E${r}`).value = effectiveUnitPrice;
     newSheet.getCell(`F${r}`).value = { formula: `D${r}*E${r}`, result: Number(item.totalWithoutVat) };
     newSheet.getCell(`G${r}`).value = String(currentCod);
 
@@ -336,19 +342,25 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
     row.getCell(6).value = null;
     row.getCell(7).value = 0;
 
+    const effectiveUnitPrice = (item.totalWithoutVat && item.quantity)
+      ? (Math.abs(item.quantity * item.unitPrice - item.totalWithoutVat) > 0.005
+          ? Number((item.totalWithoutVat / item.quantity).toFixed(4))
+          : Number(item.unitPrice))
+      : Number(item.unitPrice);
+
     // H, I, J: Intrari
     row.getCell(8).value = Number(item.quantity);
-    row.getCell(9).value = Number(item.unitPrice);
+    row.getCell(9).value = effectiveUnitPrice;
     row.getCell(10).value = { formula: `H${r}*I${r}`, result: Number(item.totalWithoutVat) };
 
     // K, L, M: Iesiri
     row.getCell(11).value = null;
-    row.getCell(12).value = { formula: `I${r}`, result: Number(item.unitPrice) };
+    row.getCell(12).value = { formula: `I${r}`, result: effectiveUnitPrice };
     row.getCell(13).value = { formula: `K${r}*L${r}`, result: 0 };
 
     // N, O, P: Stoc final
     row.getCell(14).value = { formula: `E${r}+H${r}-K${r}`, result: Number(item.quantity) };
-    row.getCell(15).value = { formula: `I${r}`, result: Number(item.unitPrice) };
+    row.getCell(15).value = { formula: `I${r}`, result: effectiveUnitPrice };
     row.getCell(16).value = { formula: `N${r}*O${r}`, result: Number(item.totalWithoutVat) };
 
     // Copy style from previous product row
