@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
+
+:root {
+  /* Core Colors */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #eff6ff;
+  --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  --primary-neu-shadow: 5px 5px 14px rgba(37, 99, 235, 0.4), -3px -3px 8px rgba(255, 255, 255, 0.85);
+  
+  --success: #16a34a;
+  --success-light: #f0fdf4;
+  --success-gradient: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+  --success-neu-shadow: 5px 5px 14px rgba(22, 163, 74, 0.4), -3px -3px 8px rgba(255, 255, 255, 0.85);
+
+  --warning: #d97706;
+  --warning-light: #fffbeb;
+  --danger: #dc2626;
+  --danger-light: #fef2f2;
+  
+  /* Neumorphic 2.0 & Neo-Skeuomorphic Palette - Darker Slate Contrast */
+  --bg-main: #d3dbe6;
+  --bg-card: #eef2f7;
+  --bg-convex: linear-gradient(145deg, #f8faff, #e2e8f2);
+  --bg-concave: linear-gradient(145deg, #e2e8f2, #f8faff);
+  --bg-panel: #e5ecf5;
+
+  /* High-Contrast Tactile 3D Shadows */
+  --neu-flat: 10px 10px 24px #b2bece, -9px -9px 22px rgba(255, 255, 255, 0.95);
+  --neu-flat-hover: 14px 14px 30px #a6b3c4, -11px -11px 26px rgba(255, 255, 255, 1);
+  --neu-flat-sm: 5px 5px 12px #b6c2d2, -4px -4px 10px rgba(255, 255, 255, 0.9);
+  --neu-flat-xs: 3px 3px 7px #bac6d6, -2px -2px 6px rgba(255, 255, 255, 0.85);
+  --neu-pressed: inset 4px 4px 9px #b4c0d0, inset -4px -4px 9px rgba(255, 255, 255, 0.9);
+  --neu-pressed-deep: inset 7px 7px 16px #abb8c9, inset -6px -6px 16px rgba(255, 255, 255, 0.95);
+  
+  /* Bevels & Skeuomorphic Borders */
+  --neu-border: 1px solid rgba(255, 255, 255, 0.9);
+  --neu-border-subtle: 1px solid rgba(195, 208, 222, 0.6);
+  --border: #cad5e2;
+  --border-focus: #3b82f6;
+
+  /* Typography */
+  --text-main: #0f172a;
+  --text-sub: #334155;
+  --text-muted: #64748b;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Crisp Blue Border Button Design Tokens (referință foto utilizator) */
+  --btn-border-blue: #38bdf8;
+  --btn-border-hover: #ffffff;
+  --btn-text-blue: #0284c7;
+  --btn-bg-hover: #0284c7;
+  --btn-shadow-soft: 0 2px 8px rgba(56, 189, 248, 0.2), var(--neu-flat-xs);
+  --btn-shadow-hover: 0 4px 16px rgba(2, 132, 199, 0.4), var(--neu-flat-sm);
+
+  /* Border Radii */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-main);
+  background-image: 
+    radial-gradient(at 10% 10%, rgba(255, 255, 255, 0.6) 0px, transparent 40%),
+    radial-gradient(at 90% 90%, rgba(155, 175, 200, 0.45) 0px, transparent 50%),
+    linear-gradient(180deg, #d7dfeb 0%, #cbd4e2 100%);
+  background-attachment: fixed;
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+button svg {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Animația din Pasul 2 la hover peste butoane: ridicare și reflexie luminoasă */
+button:hover:not(:disabled) svg {
+  transform: translateY(-2px) scale(1.1);
+}
+
+/* Animația fizică de apăsare pe buton la click (:active) */
+button:active:not(:disabled) {
+  transform: translateY(2px) scale(0.96) !important;
+  box-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.35), inset -3px -3px 8px rgba(255, 255, 255, 0.2) !important;
+}
+
+button:active:not(:disabled) svg {
+  transform: translateY(1px) scale(0.94);
+}
+
+/* Stil Buton Foto Referință: border cyan-albastru, iar la hover fundal albastru și border alb */
+.tactileBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: var(--bg-convex);
+  color: var(--btn-text-blue);
+  border: 1.5px solid var(--btn-border-blue);
+  border-radius: var(--radius-md);
+  box-shadow: var(--btn-shadow-soft);
+  font-weight: 700;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.tactileBtn:hover:not(:disabled) {
+  background: var(--btn-bg-hover) !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+  box-shadow: var(--btn-shadow-hover) !important;
+  transform: translateY(-4px) !important;
+}
+
+.tactileBtn:active:not(:disabled) {
+  transform: translateY(2px) scale(0.96) !important;
+  box-shadow: var(--neu-pressed-deep), inset 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
