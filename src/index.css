@@ -7,7 +7,7 @@
   --primary-light: #eff6ff;
   --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   --primary-neu-shadow: 5px 5px 14px rgba(37, 99, 235, 0.4), -3px -3px 8px rgba(255, 255, 255, 0.85);
-  
+
   --success: #16a34a;
   --success-light: #f0fdf4;
   --success-gradient: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
@@ -17,7 +17,7 @@
   --warning-light: #fffbeb;
   --danger: #dc2626;
   --danger-light: #fef2f2;
-  
+
   /* Neumorphic 2.0 & Neo-Skeuomorphic Palette - Darker Slate Contrast */
   --bg-main: #d3dbe6;
   --bg-card: #eef2f7;
@@ -32,7 +32,7 @@
   --neu-flat-xs: 3px 3px 7px #bac6d6, -2px -2px 6px rgba(255, 255, 255, 0.85);
   --neu-pressed: inset 4px 4px 9px #b4c0d0, inset -4px -4px 9px rgba(255, 255, 255, 0.9);
   --neu-pressed-deep: inset 7px 7px 16px #abb8c9, inset -6px -6px 16px rgba(255, 255, 255, 0.95);
-  
+
   /* Bevels & Skeuomorphic Borders */
   --neu-border: 1px solid rgba(255, 255, 255, 0.9);
   --neu-border-subtle: 1px solid rgba(195, 208, 222, 0.6);
@@ -55,7 +55,7 @@
 
   /* Border Radii */
   --radius-sm: 8px;
-  --radius-md: 14px;
+  --radius-md: 16px;
   --radius-lg: 20px;
   --radius-xl: 28px;
 }
@@ -69,7 +69,7 @@
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-main);
-  background-image: 
+  background-image:
     radial-gradient(at 10% 10%, rgba(255, 255, 255, 0.6) 0px, transparent 40%),
     radial-gradient(at 90% 90%, rgba(155, 175, 200, 0.45) 0px, transparent 50%),
     linear-gradient(180deg, #d7dfeb 0%, #cbd4e2 100%);
@@ -85,26 +85,7 @@ button {
   cursor: pointer;
   border: none;
   background: none;
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-button svg {
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Animația din Pasul 2 la hover peste butoane: ridicare și reflexie luminoasă */
-button:hover:not(:disabled) svg {
-  transform: translateY(-2px) scale(1.1);
-}
-
-/* Animația fizică de apăsare pe buton la click (:active) */
-button:active:not(:disabled) {
-  transform: translateY(2px) scale(0.96) !important;
-  box-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.35), inset -3px -3px 8px rgba(255, 255, 255, 0.2) !important;
-}
-
-button:active:not(:disabled) svg {
-  transform: translateY(1px) scale(0.94);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Stil Buton Foto Referință: border cyan-albastru, iar la hover fundal albastru și border alb */
@@ -112,13 +93,13 @@ button:active:not(:disabled) svg {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  background: var(--bg-convex);
+  background: #ffffff;
   color: var(--btn-text-blue);
   border: 1.5px solid var(--btn-border-blue);
   border-radius: var(--radius-md);
   box-shadow: var(--btn-shadow-soft);
   font-weight: 700;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
 }
 
@@ -127,15 +108,17 @@ button:active:not(:disabled) svg {
   border-color: #ffffff !important;
   color: #ffffff !important;
   box-shadow: var(--btn-shadow-hover) !important;
-  transform: translateY(-4px) !important;
+  transform: translateY(-2px);
 }
 
 .tactileBtn:active:not(:disabled) {
-  transform: translateY(2px) scale(0.96) !important;
-  box-shadow: var(--neu-pressed-deep), inset 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+  transform: translateY(0);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.25);
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   font-family: inherit;
 }
 

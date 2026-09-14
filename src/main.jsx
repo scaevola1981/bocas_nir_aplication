@@ -1,7 +1,28 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import * as Sentry from '@sentry/react';
 import { App } from './App';
 import './index.css';
+
+// Inițializare Sentry Error Monitoring & Crash Reporting
+Sentry.init({
+  dsn: "https://9302e9ea7bc37fc2b798f0adfdb51fdc@o4512083459440640.ingest.de.sentry.io/4512083472613456",
+  integrations: [
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration({
+      maskAllText: false,
+      blockAllMedia: false,
+    }),
+  ],
+  // Rata de eșantionare a performanței și erorilor
+  tracesSampleRate: 1.0,
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
+  environment: import.meta.env.MODE || 'production',
+});
+
+// Trimitere mesaj de test pentru confirmarea conectării cu Sentry
+Sentry.captureMessage('Bocas NIR Sentry Monitoring activat cu succes!');
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -19,4 +40,3 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
-
