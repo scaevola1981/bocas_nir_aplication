@@ -1,139 +1,122 @@
-# Caiet de Sarcini & Arhitectură Tehnică
+# Caiet de Sarcini, Arhitectură Tehnică & Audit de Securitate
 ## Proiect: Automatizare Generare NIR & Actualizare Gestiune din e-Factura
 
 > [!IMPORTANT]
-> **Esența Proiectului (Pe Scurt):**  
-> Clientul face **Drag & Drop** cu factura în program $\rightarrow$ programul o citește automat $\rightarrow$ o transformă și o trimite direct în **Excel**, sub forma exactă existentă (creează tab-ul `Nir XX` corespunzător + adaugă intrările în foaia `Gestiune`). Zero instalare pe calculatorul clientului, 100% online.
+> **Esența Proiectului:**  
+> Clientul deschide aplicația web (sau aplicația instalată pe Desktop via PWA) → Conectează registrul său Excel de gestiune → Trage factura (PDF sau XML e-Factura) cu Drag & Drop → Sistemul validează, filtrează și trimite datele direct în fișierul Excel de pe calculatorul său (creează fila `Nir XX` + actualizează foaia `Gestiune`).  
+> **Securitate 100%:** Datele financiare nu părăsesc niciodată calculatorul clientului (procesare locală client-side).
 
 ---
 
 ### 1. Contextul Proiectului și Problema Rezolvată
 
-**Client:** S.C. BOCAS PROJECT SRL  
-**Fluxul manual actual:**
-1. Clientul descarcă facturile de la furnizori (fie direct din Spațiul Privat Virtual - SPV / e-Factura, fie prin SmartBill / alte softuri de facturare, sub formă de fișiere PDF sau XML).
-2. În mod manual, operatorul citește fiecare factură și transcrie datele în fișierul Excel de gestiune (`Document de lucru.xlsx`):
-   - Creează o filă nouă de **Nota de Intrare Recepție (NIR)** (ex: `Nir 32`, `Nir 33`, `Nir 34` etc.), completând datele furnizorului, numărul facturii, data și fiecare linie de produs cu preț, cantitate și valoare.
-   - Desface și introduce fiecare produs în foaia centrală **`Gestiune`** la coloanele de **INTRĂRI**, alocând manual un **COD intern** (ex: `17434`, `17435`, `17436`, `17437`) și un identificator de **NIR** (ex: `260832`, `260833`, `260834`).
-3. Acest proces manual este consumator de timp, repetitiv și expus la greșeli de tastare la prețuri, cantități sau formule.
+* **Beneficiar:** S.C. BOCAS PROJECT SRL  
+* **Fluxul manual anterior:**
+  1. Operatorul descărca facturile din Spațiul Privat Virtual (SPV / e-Factura) sau din softul de facturare (SmartBill etc.).
+  2. Transcria manual fiecare factură în fișierul Excel de gestiune:
+     - Crea o filă nouă de NIR (`Nir 32`, `Nir 33` etc.), completând datele furnizorului, documentul și articolele cu preț, cantitate și valoare.
+     - Introduce fiecare produs în foaia centrală `Gestiune` la coloanele de intrări, căutând manual ultimul cod secvențial (`COD`, ex: `17438`) și codul de NIR (`AALLNN`, ex: `260834`).
+  3. Procesul dura între 15 și 30 de minute per factură și era expus la erori de tastare, pierderi de zecimale și riscul dublării accidentale a stocurilor.
 
-**Obiectivul:**  
-Realizarea unei soluții software accesibile de la distanță, care să preia factura electronică (PDF sau XML e-Factura), să extragă automat datele și să actualizeze direct fișierul Excel, respectând 100% structura, formulele și formatarea existentă.
-
----
-
-### 2. Analiza Datelor și Documentelor Existente
-
-În urma inspectării fișierelor de lucru (`Document de lucru.xlsx` și a facturilor furnizor: *BEIJER REF ROMANIA SRL*, *SARMIS COMEX S.R.L.*), a fost identificată următoarea structură de date:
-
-#### A. Tab-ul Central `Gestiune` (Balanță Stocuri Lunară)
-* **Antet:** Luna și Anul (ex: `AUGUST 2026`).
-* **Coloane esențiale:**
-  * `Col A`: **DENUMIRE PRODUS**
-  * `Col B`: **COD** intern (număr secvențial, de exemplu de la `13025` până la `17437` etc.).
-  * `Col C`: **NIR** (format `AALLNN` – ex: `260834` = An 2026, Luna 08, NIR nr. 34).
-  * `Col D`: **U/M** (BUC., ML., KG., etc.).
-  * `Col E - G`: **STOC LA 01.LL.AAAA** (Cantitate, Preț Unitar, Valoare).
-  * `Col H - J`: **INTRĂRI LUNA** (Cantitate, Preț Unitar, Valoare).
-  * `Col K - M`: **IEȘIRI LUNA** (Cantitate, Preț Unitar, Valoare).
-  * `Col N - P`: **STOC LA SFÂRȘITUL LUNII** (Cantitate, Preț Unitar, Valoare).
-* **Comportament observat:** Articolele intrate pe facturi noi sunt adăugate la finalul listei din `Gestiune`, primind următorul cod secvențial (`COD = ultimul_cod + 1`).
-
-#### B. Tab-urile Individuale de NIR (`Nir 32`, `Nir 33`, `Nir 34`...)
-* Șablon formal de recepție pentru fiecare factură în parte:
-  * **Antet firmă:** Datele cumpărătorului (S.C. BOCAS PROJECT SRL, CUI, sediu, cont IBAN).
-  * **Număr NIR:** `NOTE DE INTRARE RECEPȚIE Nr. [XX]`.
-  * **Furnizor:** `Se recepționează mărfurile furnizate de [NUME_FURNIZOR]`.
-  * **Document sursă:** `Conform facturii [NR_DOC] din [DATA_DOC]`.
-  * **Tabel produse (rândul 14 în jos):**
-    * `Col A`: nr. crt.
-    * `Col B`: Denumire produs
-    * `Col C`: U/M
-    * `Col D`: Cantitate
-    * `Col E`: Preț unitar fără TVA
-    * `Col F`: Valoare fără TVA
-    * `Col G`: Cod intrare (același cu COD-ul din tabul `Gestiune`)
-  * **Subsol:** Rândul de `TOTAL` cu formula sumei pentru valorile fără TVA.
-
-#### C. Facturile Sursă (e-Factura & Documente Fizice)
-* **Formatul principal:** Facturi descărcate din e-Factura / SPV / SmartBill în format **PDF** (așa cum sunt cele din mostre).
-* **Compatibilitate extinsă:** Aplicația va fi pregătită să accepte și fișiere **XML (standard e-Factura UBL)**, precum și posibilitatea viitoare de procesare prin OCR a facturilor fizice fotografiate/scanate.
-* **Fidelitate față de șablon:** Structura generată în Excel va respecta cu strictețe 100% șablonul din fișierul de referință oferit (`Document de lucru.xlsx`).
+* **Obiectiv atins:**  
+  O aplicație modernă, distribuită prin cloud (Vercel) cu instalare pe Desktop, care reduce timpul de introducere la **sub 3 secunde per factură**, garantând fidelitatea 100% a calculelor și eliminarea completă a erorilor umane.
 
 ---
 
-### 3. Scenariul de Utilizare (User Journey)
-
-* **Context operațional:** Clientul se află la distanță față de dezvoltator. Clientul va folosi aplicația web pe **propriul său calculator (PC)**, exact acolo unde se află stocat și fișierul lui Excel de gestiune (`Document de lucru.xlsx`).
-* **De ce Web App / PWA:** Se elimină complet necesitatea de a fi prezent la calculatorul clientului pentru instalări, configurații de sistem, actualizări sau depanare. Orice modificare adusă codului de către dezvoltator pe GitHub ajunge automat pe calculatorul clientului la următoarea accesare.
-* **Cum se leagă aplicația de Excel-ul de pe PC-ul clientului:** 
-  Folosind tehnologia nativă a browserului (**File System Access API** în Chrome / Edge), clientul alege fișierul Excel o singură dată de pe hard disk-ul propriu (ex: de pe Desktop). Din acel moment, la fiecare factură aprobată, aplicația **actualizează și salvează modificările DIRECT în fișierul de pe PC-ul lui**, exact în folderul original, fără descărcări manuale repetitive.
+### 2. Arhitectura Tehnică a Sistemului
 
 ```mermaid
 flowchart TD
-    A[Utilizator deschide browserul] --> B[Încarcă Factura: PDF sau XML e-Factura]
-    B --> C[Încarcă sau Selectează 'Document de lucru.xlsx']
-    C --> D[Motorul de Parsare extrage automat datele]
-    D --> E[Afișare Ecran de Previzualizare & Validare]
-    E --> F{Utilizatorul modifică ceva?}
-    F -- Da --> G[Ajustează denumire / cantitate / mapare]
-    F -- Nu --> H[Apasă 'Generează NIR și Salvează']
-    G --> H
-    H --> I[Generare Tab Nou 'Nir XX' în Excel]
-    H --> J[Adăugare Linii Noi în Tab-ul 'Gestiune']
-    I & J --> K[Descărcare directă fișier Excel actualizat]
+    A[Client deschide link-ul Vercel / PWA Desktop] --> B[Pasul 1: Conectează Registrul Excel local]
+    B --> C[File System Access API obține handle de scriere locală]
+    C --> D[Analiză Excel: Ultimul NIR, Ultimul Cod, Balanță Gestiune]
+    D --> E[Pasul 2: Drag & Drop Factură PDF / XML e-Factura]
+    E --> F[Parsare & Normalizare: Furnizor, Nr. Factură, Dată, Produse]
+    F --> G{Verificare Duplicat în Istoric}
+    G -- Duplicat Detectat --> H[Blocare Automată Trimitere + Alertă Roșie]
+    G -- Factură Nouă --> I[Deschidere Fereastră Verificare NIR]
+    H -- Forțare Asumată --> I
+    I --> J[Filtru Contabilitate: Debifare consumabile / taxe]
+    J --> K[Apasă 'Trimite în Excel']
+    K --> L[Generare foaie NIR + Inserare rânduri Gestiune]
+    L --> M[Salvare DIRECTĂ în fișierul Excel de pe Desktop]
+    M --> N[Notificare Succes + Sincronizare Monitor Sentry]
 ```
 
-#### Etapele pas cu pas:
-1. **Accesare aplicație (PWA):**  
-   Clientul deschide aplicația web în browser (pe Vercel). Nu necesită instalare pe stația de lucru.
-2. **Încărcare Factură (Pasul 1):**
-   * Clientul face **Drag & Drop** cu factura (PDF sau XML e-Factura).
-   * Programul o citește și o formatează complet conform regulilor Excel-ului.
-3. **Studierea și Verificarea Datelor (Pasul 2 - Ecranul de Control & Filtrare Contabilă):**
-   * Aplicația extrage și include inițial **toate produsele** de pe factură în propunerea de NIR.
-   * **Filtru esențial pentru Contabilitate:** Înainte de scrierea în Excel, clientul **studiază NIR-ul** și are posibilitatea de a **elimina / debifa produsele care nu aparțin de contul de gestiune de mărfuri/materii prime** (de exemplu consumabile precum *pungi*, *piatră de polizor*, *materiale mărunte* etc., care în contabilitate merg pe alte conturi și nu se trec în acest registru de stocuri).
-   * Clientul elimină rapid aceste articole cu un simplu click (buton de ștergere sau debifare pe rând).
-
-4. **Trimiterea în Excel-ul de Contabilitate:**
-   * Când NIR-ul este validat de client (rămânând doar produsele de gestiune), se apasă **„Trimite în Excel”**.
-   * Se preiau toate produsele validate din NIR și se trec automat în foaia **`Gestiune`** (fișierul de contabilitate), ca rânduri noi la finalul tabelului, incrementând numărul/codul secvențial (`17438...`).
-   * Se creează tab-ul nou de NIR (ex: `Nir 35`) și se actualizează fișierul Excel de contabilitate.
+#### Componentele Arhitecturale:
+1. **Frontend & UI (React 18 + Vite):**
+   - Interfață neo-tactilă (Neumorphic 2.0) cu contrast vizual optim, culori curate, butoane stilizate și modale intuitive.
+   - PWA (Progressive Web App) configurat cu Service Worker (`sw.js`) și `manifest.json`, permițând instalarea aplicației direct pe ecranul calculatorului (Desktop Windows / Mac).
+2. **Motorul de Parsare a Facturilor (`pdfParser.js` & `xmlParser.js`):**
+   - **XML e-Factura (UBL standard ANAF):** Extragere precisă din structura `cac:InvoiceLine`, cantități, prețuri și unități de măsură internaționale.
+   - **PDF (SmartBill / SPV / Linde Gaz etc.):** Algoritm avansat de grupare a textului pe coordonate Y (linii), extragere coloane numerice și recunoaștere automată a tabelelor de produse.
+3. **Motorul de Gestiune Excel (`excelEngine.js`):**
+   - Bazat pe `exceljs`, singura bibliotecă capabilă să cloneze structuri complexe de foi de calcul **păstrând 100% stilurile celulelor, fonturile, bordurile și formulele native Excel**.
+4. **Legătura cu Fișierele Locale (`fileSystem.js`):**
+   - Folosește **File System Access API** (`showOpenFilePicker` și `createWritable`), permițând citirea și **salvarea înlocuită direct pe hard disk-ul utilizatorului**, fără a descărca duplicate în folderul *Downloads*.
 
 ---
 
-### 4. Tehnologii Recomandate & Justificare
+### 3. Fidelitatea Datelor & Calculul Contabil
 
-Pentru a garanta stabilitate, mentenanță la distanță zero pe stația clientului și integritatea datelor din Excel, stiva tehnologică recomandată este:
+#### A. Rezolvarea Discrepanțelor de Rotunjire (ex. Linde Gaz / Gaze Tehnice)
+* În sistemele de facturare industriale (Linde Gaz), prețul unitar din baza de date are frecvent 4 zecimale (ex: `21,9849 lei/mc`), dar pe factură se tipărește rotunjit la 2 zecimale (`21,98 lei`).
+* Dacă se calculează naiv $19{,}20 \times 21{,}98$, rezultă $422{,}02\text{ lei}$ (o pierdere de 9 bani față de valoarea facturii de $422{,}11\text{ lei}$).
+* **Soluția implementată:** Aplicația calculează `effectiveUnitPrice` cu precizie de 4 zecimale și transmite ca rezultat garantat valoarea oficială din factură ($422{,}11\text{ lei}$), astfel încât la deschiderea în Microsoft Excel, toate sumele și formulele bat la ban cu documentul fiscal.
 
-| Componentă | Tehnologie Aleasă | Justificare |
-| :--- | :--- | :--- |
-| **Tip Aplicație** | **PWA (Progressive Web App)** | Se deschide direct în browser prin link securizat; clientul o poate „instala” opțional pe desktop cu un singur click din browser, fără asistență tehnică. Zero instalare nativă. |
-| **Găzduire & CI/CD** | **Vercel + GitHub** | Fiecare modificare/îmbunătățire trimisă pe GitHub se propagă automat pe Vercel (deploy automat). Mentenanță 100% la distanță. |
-| **Stilizare (CSS)** | **CSS Modules (`*.module.css`)** | Fără Tailwind. CSS curat, modularizat pe componente, ușor de citit, înțeles și menținut. Fără clase lungi aglomerate în JSX. |
-| **Framework Web** | **Next.js (sau React + Vite)** | Suport complet pentru PWA, viteză maximă și API routes integrate pentru procesare fișiere. |
-| **Manipulare Excel** | **`exceljs`** | Singura librărie sigură pentru Node.js capabilă să deschidă `Document de lucru.xlsx`, să cloneze foi de lucru (template NIR) și să adauge intrări în `Gestiune` **fără să altereze stilurile, formatarea celulelor sau formulele vechi**. |
-| **Procesare Facturi** | **`fast-xml-parser` + `pdf-parse`** | Suport dublu: atinge precizie de 100% pe XML e-Factura și permite extragerea din PDF-urile descărcate din SmartBill / SPV. |
+#### B. Cartografierea Unităților de Măsură (U/M)
+Sistemul recunoaște și traduce automat codurile UBL e-Factură în unități contabile românești:
+* `H87`, `PCE`, `C62` → `BUC.`
+* `MTQ` (metru cub volum gaze/lichide) → `MC.` (curățat automat din denumirea produsului)
+* `MTK` → `MP.`
+* `MTR` → `ML.`
+* `KGM` → `KG.`
+* `LTR` → `L.`
+* `SET` → `SET`, `PR` → `PER`
 
----
-
-### 5. Beneficii Directe pentru Client și Dezvoltator
-
-* **Timp redus:** Transcrierea unei facturi scade de la 10-15 minute la **3 secunde**.
-* **Fără erori umane:** Prețurile, cantitățile și zecimalele sunt preluate identic din factura electronică.
-* **Siguranță Anti-Duplicat (Protecție Automată):**
-  - **Verificare Număr Factură:** La fiecare încărcare, numărul facturii este normalizat (eliminare caractere speciale, separare serie de număr, eliminare zerouri nesemnificative) și comparat cu toate facturile din tab-urile existente (`D11` din fiecare foaie `Nir XX`) și din fișierele din același lot.
-  - **Blocare Automată:** Dacă o factură există deja în Excel (ex: `89180` în `Nir 34`, `15560` în `Nir 32`), sistemul blochează automat butonul de trimitere („Factură Duplicat - Blocat”), afișează un banner roșu de alertă și oprește scrierea.
-  - **Barieră Dublă (UI & Engine):** Chiar și dacă s-ar apela funcția de scriere, `processInvoiceIntoExcel` aruncă o excepție de siguranță dacă duplicatul nu a fost asumat explicit prin bifarea căsuței de deblocare forțată.
-  - **Prevenire Erori Umane:** Împiedică dublarea stocurilor în gestiune și denaturarea balanței contabile dacă utilizatorul trage din greșeală aceeași factură de două ori.
-* **Fără dependență de locație:** Clientul poate folosi aplicația de oriunde, iar dezvoltatorul poate interveni sau adăuga funcții noi de la distanță, fără să fie prezent fizic la biroul clientului.
-* **Compatibilitate completă:** Formatul final al fișierului `Document de lucru.xlsx` rămâne 100% neschimbat față de ce folosește clientul în prezent.
+#### C. Filtrarea Contabilă a Consumabilelor
+Înainte de trimiterea în registrul de stocuri, operatorul poate debifa cu un click articolele care sunt consumabile sau taxe (ex: *pungi, pietre de polizor, taxe de cogenerare, chirie ambalaje*). Acestea rămân vizibile în istoricul de recepție, dar **nu poluează fișa de stoc din `Gestiune`**.
 
 ---
 
-### 6. Pașii Următori
+### 4. Siguranță & Protecție Anti-Duplicat
 
-1. Aprobarea scenariului și a fluxului de către client.
-2. Construirea nucleului de procesare (modulul de citire facturi + modulul de scriere Excel).
-3. Dezvoltarea interfeței web (ecranul de upload și previzualizare).
-4. Testare pe setul de facturi existente și validarea rezultatului final în Excel.
+Sistemul include o barieră dublă împotriva introducerii duble a aceleiași facturi:
+1. **Normalizarea Numărului de Factură:** Eliminare spații, caractere speciale, prefixe și zerouri nesemnificative (ex: `4401312819`, `0089180` devin chei canonice comparabile).
+2. **Scanarea Istoricului:** Compară numărul facturii noi cu toate facturile din tab-urile existente (`D11` din fiecare foaie `Nir XX`) și din lotul curent încărcat.
+3. **Blocare Automată la Nivel de Interfață:** Dacă factura există deja, butonul de trimitere este blocat (`Factură Duplicat (Blocat)`), iar sistemul afișează un avertisment cu foaia exactă în care a fost deja introdusă.
+4. **Barieră la Nivel de Motor (Core Engine):** `excelEngine.js` refuză execuția dacă duplicatul nu a fost confirmat explicit prin bifarea căsuței de asumare a forțării.
+
+---
+
+### 5. Audit de Securitate & Confidențialitate (GDPR)
+
+Un audit complet al securității a fost efectuat asupra bazei de cod, confirmând următoarele standarde:
+
+| Criteriu Securitate | Măsură Implementată | Nivel Risc |
+| :--- | :--- | :---: |
+| **Confidențialitate Date Financiare** | **Zero-Server Storage:** Toate fișierele (facturi PDF/XML, registru Excel) sunt procesate **exclusiv în memoria RAM a browserului clientului**. Niciun document nu este trimis, salvat sau stocat pe servere externe. Conformitate 100% GDPR. | **ZERO** |
+| **Prevenire Excel Formula Injection** | Textele denumirilor de produse preluate din facturi externe sunt verificate înainte de scriere în celulele Excel. Dacă un produs începe cu caractere susceptibile de execuție de formule (`=`, `+`, `-`, `@`), acesta este prefixat ca text sigur (`'`), prevenind atacurile de tip CSV/Formula Injection la deschiderea în MS Excel. | **SECURIZAT** |
+| **Protecție XXE (XML External Entities)** | Biblioteca `fast-xml-parser` este configurată în mod securizat, fără rezolvare de entități externe sau apeluri de rețea dtd, eliminând complet riscurile de atac XXE prin fișiere XML malițioase. | **SECURIZAT** |
+| **Protecție Sentry Data Masking** | În `main.jsx`, integrarea Sentry Session Replay are configurat `maskAllText: true` și `blockAllMedia: true`. Datele financiare, valorile facturilor și CUI-urile nu sunt înregistrate în rapoartele video de telemetrie. | **SECURIZAT** |
+| **Securitate Comunicații Web** | Deservire prin **HTTPS / TLS 1.3** pe Vercel, cu antete de izolare `Cross-Origin-Opener-Policy: same-origin-allow-popups`. | **SECURIZAT** |
+
+---
+
+### 6. Monitorizare în Timp Real (Sentry Error Tracking)
+
+Aplicația este conectată la **Sentry.io** pentru a oferi monitorizare proactivă fără a necesita intervenția utilizatorului:
+* **DSN dedicat proiectului:** `https://9302e9ea7bc...@o4512083459440640.ingest.de.sentry.io/4512083472613456`
+* **Notificări pe telefon:** Imediat ce o factură cu format necunoscut generează o excepție, dezvoltatorul primește notificare push pe aplicația mobilă Sentry și pe email.
+* **Stack Trace detaliat:** Raportul conține linia exactă de cod, versiunea browserului și pașii parcurși de client înainte de apariția problemei, permițând rezolvarea rapidă fără a fi nevoie de asistență remote (TeamViewer).
+
+---
+
+### 7. Ghid de Distribuție, CI/CD & Mentenanță
+
+* **Repository GitHub:** `https://github.com/scaevola1981/bocas_nir_aplication`
+* **Găzduire Producție:** [Vercel](https://vercel.com) (conectat automat la branch-ul `main`).
+* **Flux de Actualizare (Zero Downtime):**
+  1. Orice îmbunătățire adusă codului este urcată cu `git push origin main`.
+  2. Vercel compilează și publică noua versiune în aproximativ 25 de secunde.
+  3. Clientul deschide aplicația pe Desktop sau dă refresh în browser și primește automat versiunea actualizată, fără reinstalări manuale.

@@ -287,8 +287,10 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
           : Number(item.unitPrice))
       : Number(item.unitPrice);
 
+    const safeName = typeof item.name === 'string' && /^[=+\-@]/.test(item.name.trim()) ? `'${item.name}` : item.name;
+
     newSheet.getCell(`A${r}`).value = idx + 1;
-    newSheet.getCell(`B${r}`).value = item.name;
+    newSheet.getCell(`B${r}`).value = safeName;
     newSheet.getCell(`C${r}`).value = item.um || 'BUC.';
     newSheet.getCell(`D${r}`).value = Number(item.quantity);
     newSheet.getCell(`E${r}`).value = effectiveUnitPrice;
@@ -332,7 +334,8 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
     const row = gestiuneSheet.getRow(currentRowIndex);
     const r = currentRowIndex;
 
-    row.getCell(1).value = item.name; // A: Denumire
+    const safeName = typeof item.name === 'string' && /^[=+\-@]/.test(item.name.trim()) ? `'${item.name}` : item.name;
+    row.getCell(1).value = safeName; // A: Denumire
     row.getCell(2).value = String(item.assignedCod); // B: Cod
     row.getCell(3).value = String(nirGestiuneCode); // C: NIR
     row.getCell(4).value = item.um || 'BUC.'; // D: U/M

@@ -10,8 +10,8 @@ Sentry.init({
   integrations: [
     Sentry.browserTracingIntegration(),
     Sentry.replayIntegration({
-      maskAllText: false,
-      blockAllMedia: false,
+      maskAllText: true, // Protecție GDPR / Confidențialitate financiară
+      blockAllMedia: true,
     }),
   ],
   // Rata de eșantionare a performanței și erorilor
@@ -20,9 +20,6 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
   environment: import.meta.env.MODE || 'production',
 });
-
-// Trimitere mesaj de test pentru confirmarea conectării cu Sentry
-Sentry.captureMessage('Bocas NIR Sentry Monitoring activat cu succes!');
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
