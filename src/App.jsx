@@ -8,12 +8,14 @@ import { openLocalExcelFile, saveExcelFile, fetchDefaultExcelFile } from './serv
 import { analyzeExcelWorkbook, processInvoiceIntoExcel, getNirSheetContent, checkInvoiceDuplicate } from './services/excelEngine';
 import { NirViewModal } from './components/NirViewModal';
 import { LiveExcelExplorer } from './components/LiveExcelExplorer';
+import { InstructionsModal } from './components/InstructionsModal';
 import { parseInvoicePdf } from './services/pdfParser';
 import { parseInvoiceXml } from './services/xmlParser';
 import { Info, HelpCircle } from 'lucide-react';
 import styles from './App.module.css';
 
 export function App() {
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [excelState, setExcelState] = useState({
     connected: false,
     fileName: '',
@@ -270,6 +272,7 @@ export function App() {
         excelFileName={excelState.fileName}
         nextNir={excelState.nextNirNum}
         nextCod={excelState.nextCod}
+        onOpenHelp={() => setShowHelpModal(true)}
       />
 
       <main className={styles.mainContent}>
@@ -300,21 +303,23 @@ export function App() {
           processing={processingInvoice}
         />
 
-        {/* Quick Instructions Card */}
-        <section className={styles.helpCard}>
-          <div className={styles.helpIcon}>
-            <HelpCircle size={22} color="var(--primary)" />
-          </div>
-          <div>
-            <h4 className={styles.helpTitle}>Cum funcționează?</h4>
-            <ol className={styles.helpList}>
-              <li>La <strong>Pasul 1</strong>, alegi fișierul Excel de gestiune din calculatorul tău (apeși butonul <em>Alege Fișierul Excel</em>). Poți apăsa pe oricare NIR din listă pentru a-l vizualiza sau descărca direct.</li>
-              <li>La <strong>Pasul 2</strong>, tragi factura proaspăt descărcată (PDF sau XML e-Factura).</li>
-              <li>Aplicația deschide automat ecranul de <strong>Verificare NIR</strong>. Debifezi consumabilele (pungi, pietre polizor) care nu merg pe stoc.</li>
-              <li>Apeși <strong>„Trimite în Excel”</strong> → fișierul se actualizează instant pe calculator cu noul tab de NIR și rândurile din Gestiune.</li>
-            </ol>
-          </div>
-        </section>
+        {/* Quick Instructions Card - Apare DOAR pana cand clientul conecteaza Excel-ul */}
+        {!excelState.connected && (
+          <section className={styles.helpCard}>
+            <div className={styles.helpIcon}>
+              <HelpCircle size={22} color="var(--primary)" />
+            </div>
+            <div>
+              <h4 className={styles.helpTitle}>Cum funcționează?</h4>
+              <ol className={styles.helpList}>
+                <li>La <strong>Pasul 1</strong>, alegi fișierul Excel de gestiune din calculatorul tău (apeși butonul <em>Alege Fișierul Excel</em>). Poți apăsa pe oricare NIR din listă pentru a-l vizualiza sau descărca direct.</li>
+                <li>La <strong>Pasul 2</strong>, tragi factura proaspăt descărcată (PDF sau XML e-Factura).</li>
+                <li>Aplicația deschide automat ecranul de <strong>Verificare NIR</strong>. Debifezi consumabilele (pungi, pietre polizor) care nu merg pe stoc.</li>
+                <li>Apeși <strong>„Trimite în Excel”</strong> → fișierul se actualizează instant pe calculator cu noul tab de NIR și rândurile din Gestiune.</li>
+              </ol>
+            </div>
+          </section>
+        )}
 
         {/* Live Excel Explorer to view Gestiune and all NIRs without needing Excel installed */}
         <LiveExcelExplorer
@@ -344,6 +349,12 @@ export function App() {
           onClose={() => setInspectedNir(null)}
         />
       )}
+
+      {/* Ghid de Utilizare & Modal de Ajutor cu butonul ? */}
+      <InstructionsModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+      />
     </div>
   );
 }

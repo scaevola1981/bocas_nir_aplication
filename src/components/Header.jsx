@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, DownloadCloud, X, CheckCircle2, Laptop } from 'lucide-react';
+import { ShieldCheck, DownloadCloud, X, CheckCircle2, Laptop, HelpCircle } from 'lucide-react';
 import styles from './Header.module.css';
 
-export function Header({ excelConnected, excelFileName, nextNir, nextCod }) {
+export function Header({ excelConnected, excelFileName, nextNir, nextCod, onOpenHelp }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -60,6 +60,17 @@ export function Header({ excelConnected, excelFileName, nextNir, nextCod }) {
         </div>
 
         <div className={styles.rightActions}>
+          {/* Buton rotund discret cu semnul ? pentru instructiuni */}
+          <button
+            type="button"
+            className={styles.helpRoundBtn}
+            onClick={onOpenHelp}
+            title="Ghid & Instrucțiuni de utilizare"
+            aria-label="Instrucțiuni"
+          >
+            <HelpCircle size={18} />
+          </button>
+
           {/* Buton instalare pe Desktop ca aplicație normală */}
           {!isInstalled ? (
             <button

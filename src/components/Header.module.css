@@ -69,6 +69,35 @@
   flex-wrap: wrap;
 }
 
+.helpRoundBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-convex);
+  border: 1.5px solid #38bdf8;
+  color: #0284c7;
+  box-shadow: var(--neu-flat-xs);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.helpRoundBtn:hover {
+  background: #0284c7;
+  border-color: #ffffff;
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.4), var(--neu-flat-hover);
+  transform: translateY(-2px);
+}
+
+.helpRoundBtn:active {
+  transform: translateY(1px) scale(0.95);
+  box-shadow: var(--neu-pressed);
+}
+
 .installBtn {
   display: inline-flex;
   align-items: center;
