@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, DownloadCloud, X, CheckCircle2, Laptop, HelpCircle } from 'lucide-react';
+import { ShieldCheck, DownloadCloud, X, CheckCircle2, Laptop, HelpCircle, Sun, Moon } from 'lucide-react';
 import styles from './Header.module.css';
 
-export function Header({ excelConnected, excelFileName, nextNir, nextCod, onOpenHelp }) {
+export function Header({ excelConnected, excelFileName, nextNir, nextCod, onOpenHelp, theme, onToggleTheme }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -60,6 +60,17 @@ export function Header({ excelConnected, excelFileName, nextNir, nextCod, onOpen
         </div>
 
         <div className={styles.rightActions}>
+          {/* Buton comutare Temă Dark / Light */}
+          <button
+            type="button"
+            className={styles.themeToggleBtn}
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? 'Comută pe Mod Luminos (Light Mode)' : 'Comută pe Mod Întunecat (Dark Mode)'}
+            aria-label="Comută Tema"
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+
           {/* Buton rotund discret cu semnul ? pentru instructiuni */}
           <button
             type="button"

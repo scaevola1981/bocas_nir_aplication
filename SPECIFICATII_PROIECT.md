@@ -120,3 +120,18 @@ Aplicația este conectată la **Sentry.io** pentru a oferi monitorizare proactiv
   1. Orice îmbunătățire adusă codului este urcată cu `git push origin main`.
   2. Vercel compilează și publică noua versiune în aproximativ 25 de secunde.
   3. Clientul deschide aplicația pe Desktop sau dă refresh în browser și primește automat versiunea actualizată, fără reinstalări manuale.
+
+---
+
+### 8. Sistemul de Design: Neumorphism 2.0 (Teme Light & Dark)
+
+* **Design Neo-Skeuomorphic:**
+  * Butoane tactile 3D cu umbre duale (convex, concav, pressed).
+  * Borduri fine cu accente cyan/albastru (`#38bdf8`) cu reacție vizuală completă la hover și active click.
+  * Header plutitor cu colțuri generoase rotunjite (`border-radius: 28px`).
+* **Comutare Instantă a Temei (Light ☀️ / Dark 🌙):**
+  * Buton dedicat în Header lângă iconița de instrucțiuni `?`.
+  * **Mod Luminos (Light):** Fundal slate deschis `#d3dbe6` cu carduri `#eef2f7` și umbre reliefate albe/gri.
+  * **Mod Întunecat (Dark):** Obsidian slate `#0b1120` cu carduri `#172033`, umbre de profunzime `#060a13` și bevel luminous subtil `rgba(35, 48, 72, 0.45)`.
+  * **Persistență:** Preferința utilizatorului este memorată automat în `localStorage` (`bocas_theme`).
+

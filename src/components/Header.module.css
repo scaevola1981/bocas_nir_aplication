@@ -74,7 +74,8 @@
   flex-wrap: wrap;
 }
 
-.helpRoundBtn {
+.helpRoundBtn,
+.themeToggleBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -90,7 +91,8 @@
   flex-shrink: 0;
 }
 
-.helpRoundBtn:hover {
+.helpRoundBtn:hover,
+.themeToggleBtn:hover {
   background: #0284c7;
   border-color: #ffffff;
   color: #ffffff;
@@ -98,7 +100,8 @@
   transform: translateY(-2px);
 }
 
-.helpRoundBtn:active {
+.helpRoundBtn:active,
+.themeToggleBtn:active {
   transform: translateY(1px) scale(0.95);
   box-shadow: var(--neu-pressed);
 }

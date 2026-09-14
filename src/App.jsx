@@ -44,6 +44,20 @@ export function App() {
   const [errorMsg, setErrorMsg] = useState('');
   const [inspectedNir, setInspectedNir] = useState(null);
 
+  // Dark / Light Theme state cu persistență în localStorage
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('bocas_theme') || 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('bocas_theme', theme);
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   // Clientul își alege singur fișierul Excel la prima utilizare prin butonul de conectare.
   // Nu se mai forțează automat niciun fișier predefinit pe ecran.
 
@@ -273,6 +287,8 @@ export function App() {
         nextNir={excelState.nextNirNum}
         nextCod={excelState.nextCod}
         onOpenHelp={() => setShowHelpModal(true)}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
       <main className={styles.mainContent}>
