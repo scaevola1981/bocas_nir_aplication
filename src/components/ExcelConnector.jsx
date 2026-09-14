@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FolderOpen, RefreshCw, Download, Eye, Layers } from 'lucide-react';
+import { FolderOpen, RefreshCw, Download, Eye, Layers, Table } from 'lucide-react';
 import styles from './ExcelConnector.module.css';
 
 export function ExcelConnector({
@@ -7,6 +7,7 @@ export function ExcelConnector({
   onConnectExcel,
   onDownloadExcel,
   onViewSheet,
+  onViewGestiune,
   loading,
   error
 }) {
@@ -117,10 +118,20 @@ export function ExcelConnector({
                   <Layers size={15} /> Foi prezente în Excel:
                 </span>
                 <div className={styles.sheetsChips}>
-                  {/* Foaia Gestiune */}
-                  <span className={styles.sheetChipStatic}>
-                    Gestiune
-                  </span>
+                  {/* Foaia Gestiune - Navighează la tabelul live de gestiune */}
+                  <button
+                    type="button"
+                    className={`${styles.sheetChip} ${styles.sheetGestiune}`}
+                    onClick={() => {
+                      if (onViewGestiune) onViewGestiune();
+                      const el = document.getElementById('live-excel-explorer');
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    title="Click pentru a vizualiza foaia Gestiune în tabelul de mai jos"
+                  >
+                    <span>Gestiune</span>
+                    <Table size={13} className={styles.eyeIcon} />
+                  </button>
 
                   {/* Doar ultimul NIR încărcat */}
                   {latestNirName && (

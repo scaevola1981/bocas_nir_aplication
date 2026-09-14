@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Table, Eye, CheckCircle2, ChevronRight, Download, ChevronDown, Check } from 'lucide-react';
 import styles from './LiveExcelExplorer.module.css';
 
-export function LiveExcelExplorer({ excelState, onDownloadExcel }) {
-  const [activeTab, setActiveTab] = useState('Gestiune');
+export function LiveExcelExplorer({ excelState, onDownloadExcel, activeTab: externalActiveTab, onTabChange }) {
+  const [internalTab, setInternalTab] = useState('Gestiune');
+  const activeTab = externalActiveTab !== undefined ? externalActiveTab : internalTab;
+  const setActiveTab = onTabChange || setInternalTab;
   const [historyOpen, setHistoryOpen] = useState(false);
   const historyRef = useRef(null);
 
@@ -47,7 +49,7 @@ export function LiveExcelExplorer({ excelState, onDownloadExcel }) {
   const isGestiune = activeTab === 'Gestiune';
 
   return (
-    <section className={styles.container}>
+    <section className={styles.container} id="live-excel-explorer">
       <div className={styles.header}>
         <div className={styles.titleGroup}>
           <div className={styles.iconBox}>

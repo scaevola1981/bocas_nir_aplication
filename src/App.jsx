@@ -54,6 +54,16 @@ export function App() {
     localStorage.setItem('bocas_theme', theme);
   }, [theme]);
 
+  const [activeLiveTab, setActiveLiveTab] = useState('Gestiune');
+
+  const handleViewGestiune = () => {
+    setActiveLiveTab('Gestiune');
+    const el = document.getElementById('live-excel-explorer');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const handleToggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
@@ -309,6 +319,7 @@ export function App() {
           onConnectExcel={handleConnectExcel}
           onDownloadExcel={handleDownloadExcel}
           onViewSheet={handleViewSheet}
+          onViewGestiune={handleViewGestiune}
           loading={loadingExcel}
           error={excelError}
         />
@@ -341,6 +352,8 @@ export function App() {
         <LiveExcelExplorer
           excelState={excelState}
           onDownloadExcel={handleDownloadExcel}
+          activeTab={activeLiveTab}
+          onTabChange={setActiveLiveTab}
         />
       </main>
 
