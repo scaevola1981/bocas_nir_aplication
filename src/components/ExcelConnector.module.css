@@ -306,7 +306,7 @@
 /* Empty Prompt Card when no Excel file connected */
 .emptyPromptCard {
   margin-top: 1.5rem;
-  background: var(--bg-convex);
+  background: var(--bg-card);
   border: 2px dashed #38bdf8;
   border-radius: var(--radius-lg);
   padding: 1.75rem 2rem;
@@ -319,23 +319,24 @@
 }
 
 .emptyPromptCard:hover {
-  background: #ffffff;
+  background: var(--bg-convex);
   border-color: #0284c7;
   transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(2, 132, 199, 0.2), var(--neu-flat-hover);
+  box-shadow: 0 12px 28px rgba(2, 132, 199, 0.25), var(--neu-flat-hover);
 }
 
 .emptyPromptIcon {
   width: 58px;
   height: 58px;
   border-radius: var(--radius-md);
-  background: #f0f9ff;
+  background: var(--bg-convex);
   border: 1.5px solid #38bdf8;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: var(--neu-flat-xs);
   flex-shrink: 0;
+  color: var(--primary);
 }
 
 .emptyPromptText {
@@ -345,14 +346,14 @@
 .emptyPromptTitle {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-main);
   margin-bottom: 0.3rem;
   letter-spacing: -0.01em;
 }
 
 .emptyPromptSub {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-sub);
   line-height: 1.45;
 }
 

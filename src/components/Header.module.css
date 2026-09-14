@@ -1,6 +1,6 @@
 .header {
   background: var(--bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.95);
+  border: var(--neu-border);
   border-radius: var(--radius-xl);
   box-shadow: var(--neu-flat);
   position: sticky;
