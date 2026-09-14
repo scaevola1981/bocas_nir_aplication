@@ -102,9 +102,14 @@ export function ExcelConnector({
           {/* Sheets List & Quick View: Show only Gestiune and latest NIR */}
           {excelState.sheetsList && excelState.sheetsList.length > 0 && (() => {
             const latestNirName = excelState.maxNirNum > 0 ? `Nir ${excelState.maxNirNum}` : null;
-            const olderNirSheets = excelState.sheetsList.filter(
-              name => /^Nir\s*/i.test(name) && name !== latestNirName
-            );
+            const olderNirSheets = (excelState.sheetsList || [])
+              .filter(name => /^Nir\s*/i.test(name) && name !== latestNirName)
+              .sort((a, b) => {
+                const numA = parseInt(a.replace(/\D+/g, '') || '0', 10);
+                const numB = parseInt(b.replace(/\D+/g, '') || '0', 10);
+                return numB - numA;
+              })
+              .slice(0, 10);
 
             return (
               <div className={styles.sheetsRow}>
@@ -130,15 +135,15 @@ export function ExcelConnector({
                     </button>
                   )}
 
-                  {/* Buton opțional pentru istoric anterior */}
+                  {/* Buton opțional pentru istoric anterior (max 10) */}
                   {olderNirSheets.length > 0 && (
                     <>
                       <button
                         className={styles.toggleOlderBtn}
                         onClick={() => setShowAllSheets(prev => !prev)}
-                        title="Comută afișarea NIR-urilor anterioare"
+                        title="Comută afișarea ultimelor 10 NIR-uri"
                       >
-                        {showAllSheets ? 'Ascunde istoricul' : `+ ${olderNirSheets.length} NIR-uri anterioare`}
+                        {showAllSheets ? 'Ascunde istoricul' : `+ ${olderNirSheets.length} NIR-uri recente`}
                       </button>
 
                       {showAllSheets && olderNirSheets.map((name) => (

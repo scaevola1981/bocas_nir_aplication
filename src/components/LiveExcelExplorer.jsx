@@ -69,9 +69,17 @@ export function LiveExcelExplorer({ excelState, onDownloadExcel }) {
       {/* Sheet Tabs Bar: Show Gestiune & Latest NIR only */}
       {(() => {
         const latestNirName = excelState.maxNirNum > 0 ? `Nir ${excelState.maxNirNum}` : null;
-        const olderNirSheets = (excelState.sheetsList || []).filter(
-          name => /^Nir\s*/i.test(name) && name !== latestNirName
-        );
+        
+        // Preluăm NIR-urile anterioare sortate descrescător (cele mai recente primele) și limitate la 10
+        const allOlderNir = (excelState.sheetsList || [])
+          .filter(name => /^Nir\s*/i.test(name) && name !== latestNirName)
+          .sort((a, b) => {
+            const numA = parseInt(a.replace(/\D+/g, '') || '0', 10);
+            const numB = parseInt(b.replace(/\D+/g, '') || '0', 10);
+            return numB - numA;
+          });
+
+        const olderNirSheets = allOlderNir.slice(0, 10);
         const hasSelectedOlder = activeTab.startsWith('Nir') && activeTab !== latestNirName;
 
         return (
@@ -95,7 +103,7 @@ export function LiveExcelExplorer({ excelState, onDownloadExcel }) {
               </button>
             )}
 
-            {/* Selector dropdown personalizat poziționat exact sub buton */}
+            {/* Selector dropdown personalizat poziționat exact sub buton (limitat la max 10) */}
             {olderNirSheets.length > 0 && (
               <div className={styles.olderNirContainer} ref={historyRef}>
                 <button
@@ -104,7 +112,7 @@ export function LiveExcelExplorer({ excelState, onDownloadExcel }) {
                     hasSelectedOlder ? styles.olderNirBtnActive : ''
                   }`}
                   onClick={() => setHistoryOpen(prev => !prev)}
-                  title="Afișează istoricul de NIR-uri arhivate"
+                  title="Afișează istoricul celor mai recente 10 NIR-uri arhivate"
                 >
                   <span>
                     {hasSelectedOlder ? activeTab : `Istoric NIR-uri (${olderNirSheets.length})`}
@@ -115,7 +123,7 @@ export function LiveExcelExplorer({ excelState, onDownloadExcel }) {
                 {historyOpen && (
                   <div className={styles.dropdownMenu}>
                     <div className={styles.dropdownHeader}>
-                      Istoric NIR-uri ({olderNirSheets.length})
+                      Ultimele {olderNirSheets.length} NIR-uri
                     </div>
                     <div className={styles.dropdownList}>
                       {olderNirSheets.map(name => {
