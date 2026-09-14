@@ -564,3 +564,55 @@
   transform: translateY(2px) scale(0.96);
   box-shadow: var(--neu-pressed-deep), inset 0 2px 6px rgba(0, 0, 0, 0.3);
 }
+
+/* 🌙 Dark Mode Support for NirReviewModal */
+[data-theme="dark"] .table thead th {
+  background: #111a2c !important;
+  color: #38bdf8 !important;
+  border-bottom: 2px solid #25334d !important;
+}
+
+[data-theme="dark"] .table tbody tr {
+  border-bottom: 1px solid #1a2438 !important;
+}
+
+[data-theme="dark"] .rowSelected:hover {
+  background: #141f33 !important;
+}
+
+[data-theme="dark"] .rowExcluded {
+  background: #0f1726 !important;
+  opacity: 0.5;
+}
+
+[data-theme="dark"] .nameInput {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .nameInput:hover:not(:disabled) {
+  border-color: #38bdf8 !important;
+  background: #141f33 !important;
+}
+
+[data-theme="dark"] .nameInput:focus {
+  border-color: #38bdf8 !important;
+  background: #10192a !important;
+}
+
+[data-theme="dark"] .noticeBox {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: #166534 !important;
+  color: #4ade80 !important;
+}
+
+[data-theme="dark"] .noticeBox code {
+  background: #111a2c !important;
+  color: #38bdf8 !important;
+  border-color: #25334d !important;
+}
+
+[data-theme="dark"] .forceCheckboxLabel {
+  background: #1a161f !important;
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+}
