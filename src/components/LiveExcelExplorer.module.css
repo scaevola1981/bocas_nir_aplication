@@ -60,7 +60,7 @@
   background: var(--bg-convex);
   border: 1.5px solid #38bdf8;
   box-shadow: var(--neu-flat-sm);
-  color: #334155;
+  color: var(--btn-text-blue);
   padding: 0.6rem 1.15rem;
   border-radius: var(--radius-md);
   font-size: 0.85rem;
@@ -87,14 +87,14 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--bg-card);
+  background: var(--bg-panel);
   box-shadow: var(--neu-pressed);
   padding: 0.45rem 0.6rem;
   border-radius: var(--radius-md);
   margin-bottom: 1rem;
   position: relative;
   overflow: visible;
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: var(--neu-border-subtle);
   z-index: 20;
 }
 
@@ -130,7 +130,7 @@
 
 .tabActive {
   background: var(--bg-convex) !important;
-  color: #0284c7 !important;
+  color: var(--primary) !important;
   box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25), var(--neu-flat-xs) !important;
   border: 1.5px solid #38bdf8 !important;
 }
@@ -160,7 +160,7 @@
   background: var(--bg-convex);
   border: 1.5px solid #38bdf8;
   box-shadow: var(--neu-flat-xs);
-  color: #334155;
+  color: var(--btn-text-blue);
   padding: 0.45rem 0.9rem;
   border-radius: var(--radius-sm);
   font-size: 0.825rem;

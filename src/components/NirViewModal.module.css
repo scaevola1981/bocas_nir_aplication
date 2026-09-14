@@ -182,7 +182,7 @@
   background: var(--bg-convex);
   border: 1.5px solid #38bdf8;
   box-shadow: var(--neu-flat-xs);
-  color: #334155;
+  color: var(--btn-text-blue);
   font-weight: 700;
   font-size: 0.9rem;
   border-radius: var(--radius-md);

@@ -84,7 +84,7 @@
   border-radius: 50%;
   background: var(--bg-convex);
   border: 1.5px solid #38bdf8;
-  color: #0284c7;
+  color: var(--btn-text-blue);
   box-shadow: var(--neu-flat-xs);
   cursor: pointer;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
@@ -113,7 +113,7 @@
   background: var(--bg-convex);
   border: 1.5px solid #38bdf8;
   box-shadow: var(--neu-flat-xs);
-  color: #0284c7;
+  color: var(--btn-text-blue);
   padding: 0.55rem 1.05rem;
   border-radius: var(--radius-md);
   font-size: 0.825rem;

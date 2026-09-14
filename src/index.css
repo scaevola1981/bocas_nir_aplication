@@ -254,6 +254,52 @@
   border-color: #38bdf8 !important;
 }
 
+/* 🌙 Butoane tactile luminoase & clare în Mod Întunecat (eliminare text șters) */
+[data-theme="dark"] [class*="downloadBtn"],
+[data-theme="dark"] [class*="olderNirBtn"],
+[data-theme="dark"] [class*="sheetChip"],
+[data-theme="dark"] [class*="installBtn"],
+[data-theme="dark"] [class*="helpRoundBtn"],
+[data-theme="dark"] [class*="themeToggleBtn"],
+[data-theme="dark"] [class*="closeFooterBtn"],
+[data-theme="dark"] [class*="cancelBtn"] {
+  color: #38bdf8 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="dark"] [class*="downloadBtn"] svg,
+[data-theme="dark"] [class*="olderNirBtn"] svg,
+[data-theme="dark"] [class*="sheetChip"] svg,
+[data-theme="dark"] [class*="installBtn"] svg,
+[data-theme="dark"] [class*="helpRoundBtn"] svg,
+[data-theme="dark"] [class*="themeToggleBtn"] svg,
+[data-theme="dark"] [class*="closeFooterBtn"] svg,
+[data-theme="dark"] [class*="cancelBtn"] svg {
+  stroke: #38bdf8 !important;
+}
+
+[data-theme="dark"] [class*="downloadBtn"]:hover,
+[data-theme="dark"] [class*="olderNirBtn"]:hover,
+[data-theme="dark"] [class*="sheetChip"]:hover,
+[data-theme="dark"] [class*="installBtn"]:hover,
+[data-theme="dark"] [class*="helpRoundBtn"]:hover,
+[data-theme="dark"] [class*="themeToggleBtn"]:hover,
+[data-theme="dark"] [class*="closeFooterBtn"]:hover,
+[data-theme="dark"] [class*="cancelBtn"]:hover {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="downloadBtn"]:hover svg,
+[data-theme="dark"] [class*="olderNirBtn"]:hover svg,
+[data-theme="dark"] [class*="sheetChip"]:hover svg,
+[data-theme="dark"] [class*="installBtn"]:hover svg,
+[data-theme="dark"] [class*="helpRoundBtn"]:hover svg,
+[data-theme="dark"] [class*="themeToggleBtn"]:hover svg,
+[data-theme="dark"] [class*="closeFooterBtn"]:hover svg,
+[data-theme="dark"] [class*="cancelBtn"]:hover svg {
+  stroke: #ffffff !important;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
