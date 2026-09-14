@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FolderOpen, RefreshCw, Download, Eye, Layers, Table } from 'lucide-react';
+import { FolderOpen, RefreshCw, Eye, Layers, Table } from 'lucide-react';
 import styles from './ExcelConnector.module.css';
 
 export function ExcelConnector({
@@ -25,15 +25,6 @@ export function ExcelConnector({
 
         {excelState.connected && (
           <div className={styles.topActions}>
-            <button
-              className={styles.downloadBtn}
-              onClick={onDownloadExcel}
-              title="Descarcă o copie pe calculator"
-            >
-              <Download size={16} />
-              Descarcă Excel (.xlsx)
-            </button>
-
             <button
               className={styles.connectBtn}
               onClick={onConnectExcel}
