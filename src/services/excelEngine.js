@@ -1,12 +1,49 @@
 import ExcelJS from 'exceljs';
 
+// Helper robust pentru identificarea tab-ului Gestiune (tolerant la litere mari/mici, spații accidentale, prefixe sau tab-ul "G")
+export function getGestiuneSheet(workbook) {
+  if (!workbook) return null;
+  // 1. Potrivire exactă
+  let sheet = workbook.getWorksheet('Gestiune');
+  if (sheet) return sheet;
+
+  // 2. Potrivire fără spații și case-insensitive
+  sheet = workbook.worksheets.find(s => s.name && s.name.trim().toLowerCase() === 'gestiune');
+  if (sheet) return sheet;
+
+  // 3. Foaia numită 'G' (abreviere uzuală pentru Gestiune în registrul original Bocas)
+  sheet = workbook.worksheets.find(s => s.name && s.name.trim().toUpperCase() === 'G');
+  if (sheet) return sheet;
+
+  // 4. Potrivire parțială (ex: "Gestiune 2026", "Foaie Gestiune")
+  sheet = workbook.worksheets.find(s => s.name && s.name.trim().toLowerCase().includes('gestiune'));
+  if (sheet) return sheet;
+
+  // 5. Căutare după conținutul antetului: orice foaie care conține "DENUMIRE PRODUS" și "COD"
+  sheet = workbook.worksheets.find(s => {
+    try {
+      const row4 = s.getRow(4).values;
+      const str = JSON.stringify(row4 || '').toUpperCase();
+      return str.includes('DENUMIRE') && str.includes('COD');
+    } catch (e) {
+      return false;
+    }
+  });
+  return sheet || null;
+}
+
 export async function analyzeExcelWorkbook(arrayBuffer) {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(arrayBuffer);
 
-  const gestiuneSheet = workbook.getWorksheet('Gestiune');
+  const gestiuneSheet = getGestiuneSheet(workbook);
   if (!gestiuneSheet) {
-    throw new Error('Nu s-a găsit foaia "Gestiune" în fișierul Excel încărcat.');
+    const existingSheets = workbook.worksheets.map(s => `"${s.name}"`).join(', ');
+    throw new Error(
+      `Nu s-a găsit foaia "Gestiune" în fișierul Excel încărcat.\n` +
+      `Foile identificate în acest fișier sunt: [${existingSheets || 'niciuna'}].\n\n` +
+      `Sfat: La Pasul 1 trebuie să conectezi registrul central de lucru (de exemplu fișierul "Document de lucru.xlsx" sau "gestiune...xlsx"), NU o factură sau un fișier Excel descărcat de la furnizor.`
+    );
   }
 
   // 1. Determine highest NIR number and collect existing invoices for duplicate safety
@@ -17,41 +54,50 @@ export async function analyzeExcelWorkbook(arrayBuffer) {
 
   workbook.eachSheet((sheet) => {
     sheetsList.push(sheet.name);
-    const match = sheet.name.match(/^Nir\s*([0-9]+)$/i);
+
+    // Recunoaște atât formatul "Nir 12", "NIR 12" cât și formatul simplu "12" (din registrul original)
+    const match = sheet.name.trim().match(/^(?:Nir\s*)?([0-9]+)$/i);
     if (match) {
       const num = parseInt(match[1], 10);
-      if (num > maxNirNum) {
-        maxNirNum = num;
-        lastNirSheetName = sheet.name;
-      }
 
-      // Read invoice number from D11, supplier from E9, date from F11, total from F37
+      // Verificăm dacă foaia are conținut efectiv de NIR (furnizor, factură sau rânduri de produse)
       const invNum = sheet.getCell('D11').value;
       const supp = sheet.getCell('E9').value;
       const invDate = sheet.getCell('F11').value;
-      const totCell = sheet.getCell('F37');
-      const totalNir = typeof totCell.value === 'object' ? (totCell.result || 0) : Number(totCell.value || 0);
+      const f7Val = sheet.getCell('F7').value;
+      const hasContent = Boolean(invNum || supp || (f7Val && sheet.actualRowCount > 5));
 
-      const sheetItems = [];
-      for (let r = 15; r <= 36; r++) {
-        const pName = sheet.getCell(`B${r}`).value;
-        const pQty = sheet.getCell(`D${r}`).value;
-        if (pName && String(pName).trim()) {
-          sheetItems.push({
-            name: String(pName).trim().toUpperCase(),
-            quantity: Number(pQty || 0)
-          });
+      if (hasContent) {
+        if (num > maxNirNum) {
+          maxNirNum = num;
+          lastNirSheetName = sheet.name;
         }
-      }
 
-      existingInvoices.push({
-        sheetName: sheet.name,
-        invoiceNumber: String(invNum || '').trim(),
-        supplierName: String(supp || '').trim(),
-        invoiceDate: String(invDate || '').trim(),
-        totalNir,
-        items: sheetItems
-      });
+        const totCell = sheet.getCell('F37');
+        const totalNir = typeof totCell.value === 'object' ? (totCell.result || 0) : Number(totCell.value || 0);
+
+        const sheetItems = [];
+        for (let r = 15; r <= 36; r++) {
+          const pName = sheet.getCell(`B${r}`).value;
+          const pQty = sheet.getCell(`D${r}`).value;
+          if (pName && String(pName).trim()) {
+            sheetItems.push({
+              name: String(pName).trim().toUpperCase(),
+              quantity: Number(pQty || 0)
+            });
+          }
+        }
+
+        existingInvoices.push({
+          sheetName: sheet.name,
+          nirNumber: num,
+          invoiceNumber: String(invNum || '').trim(),
+          supplierName: String(supp || '').trim(),
+          invoiceDate: String(invDate || '').trim(),
+          totalNir,
+          items: sheetItems
+        });
+      }
     }
   });
 
@@ -105,6 +151,7 @@ export async function analyzeExcelWorkbook(arrayBuffer) {
 
   return {
     workbook,
+    gestiuneSheetName: gestiuneSheet.name,
     sheetsList,
     existingInvoices,
     maxNirNum,
@@ -183,8 +230,14 @@ export function checkInvoiceDuplicate(existingInvoices, newInvoiceNumber, newSup
 }
 
 export function getNirSheetContent(workbook, sheetName) {
-  const ws = workbook.getWorksheet(sheetName);
+  if (!workbook) return null;
+  let ws = workbook.getWorksheet(sheetName);
+  if (!ws) {
+    const cleanNum = String(sheetName).replace(/\D+/g, '');
+    ws = workbook.getWorksheet(cleanNum) || workbook.getWorksheet(`Nir ${cleanNum}`);
+  }
   if (!ws) return null;
+
   const items = [];
   for (let r = 15; r <= 36; r++) {
     const name = ws.getCell(`B${r}`).value;
@@ -202,8 +255,8 @@ export function getNirSheetContent(workbook, sheetName) {
     }
   }
   return {
-    sheetName,
-    nirNum: ws.getCell('F7').value,
+    sheetName: ws.name,
+    nirNum: ws.getCell('F7').value || sheetName,
     supplierName: ws.getCell('E9').value,
     invoiceNumber: ws.getCell('D11').value,
     invoiceDate: ws.getCell('F11').value,
@@ -256,17 +309,29 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
     throw new Error(`SIGURANȚĂ ACTIVATĂ: Factura "${invoiceNumber || 'fără număr'}" figurează deja înregistrată în Excel (foaia ${dupCheck.existingSheet}, furnizor: ${dupCheck.existingSupplier || 'Nespecificat'}). Pentru a preveni dublarea accidentală a stocurilor în gestiune, generarea NIR a fost oprită.`);
   }
 
-  const nirSheetName = `Nir ${nextNirNum}`;
+  // Respectăm convenția de denumire a foilor NIR din registrul utilizatorului (ex: "Nir 13" sau simplu "13")
+  const usesNirPrefix = lastNirSheetName && /^Nir\s*/i.test(lastNirSheetName);
+  const nirSheetName = usesNirPrefix ? `Nir ${nextNirNum}` : String(nextNirNum);
   const nirGestiuneCode = calculateNirGestiuneCode(yearStr, monthStr, nextNirNum);
 
   // 1. Clone or Create NIR Sheet
   const templateSheet = lastNirSheetName ? workbook.getWorksheet(lastNirSheetName) : null;
-  const newSheet = workbook.addWorksheet(nirSheetName);
+  
+  // Dacă foaia există deja în registrul utilizatorului (ex: foi goale 13..35 pre-create de contabil), o refolosim
+  let newSheet = workbook.getWorksheet(nirSheetName) ||
+                 (usesNirPrefix ? workbook.getWorksheet(String(nextNirNum)) : workbook.getWorksheet(`Nir ${nextNirNum}`));
 
-  if (templateSheet) {
-    copySheetStructure(templateSheet, newSheet);
+  if (newSheet) {
+    if (templateSheet && newSheet !== templateSheet) {
+      copySheetStructure(templateSheet, newSheet);
+    }
   } else {
-    setupDefaultNirSheet(newSheet);
+    newSheet = workbook.addWorksheet(nirSheetName);
+    if (templateSheet) {
+      copySheetStructure(templateSheet, newSheet);
+    } else {
+      setupDefaultNirSheet(newSheet);
+    }
   }
 
   // 2. Populate NIR Header
@@ -322,7 +387,7 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
   }
 
   // 4. Update Gestiune Sheet (Insert BEFORE Total Row)
-  const gestiuneSheet = workbook.getWorksheet('Gestiune');
+  const gestiuneSheet = getGestiuneSheet(workbook);
   let currentRowIndex = lastPopulatedProductRow + 1;
 
   for (const item of validItems) {

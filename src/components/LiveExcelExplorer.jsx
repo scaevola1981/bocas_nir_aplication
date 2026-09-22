@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Table, Eye, CheckCircle2, ChevronRight, Download, ChevronDown, Check } from 'lucide-react';
+import { getGestiuneSheet } from '../services/excelEngine.js';
 import styles from './LiveExcelExplorer.module.css';
 
 export function LiveExcelExplorer({ excelState, onDownloadExcel, activeTab: externalActiveTab, onTabChange }) {
-  const [internalTab, setInternalTab] = useState('Gestiune');
+  const defaultTab = excelState?.gestiuneSheetName || 'Gestiune';
+  const [internalTab, setInternalTab] = useState(defaultTab);
   const activeTab = externalActiveTab !== undefined ? externalActiveTab : internalTab;
   const setActiveTab = onTabChange || setInternalTab;
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -25,7 +27,9 @@ export function LiveExcelExplorer({ excelState, onDownloadExcel, activeTab: exte
 
   if (!excelState.connected || !excelState.workbook) return null;
 
-  const currentSheet = excelState.workbook.getWorksheet(activeTab) || excelState.workbook.getWorksheet('Gestiune');
+  const currentSheet = excelState.workbook.getWorksheet(activeTab) ||
+    excelState.workbook.worksheets.find(s => s.name && s.name.trim().toLowerCase() === String(activeTab).trim().toLowerCase()) ||
+    getGestiuneSheet(excelState.workbook);
 
   // Extract sheet rows
   const rowsData = [];

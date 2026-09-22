@@ -91,17 +91,24 @@ export function ExcelConnector({
             </div>
           </div>
 
-          {/* Sheets List & Quick View: Show only Gestiune and latest NIR */}
+          {/* Sheets List & Quick View: Show Gestiune and populated NIRs */}
           {excelState.sheetsList && excelState.sheetsList.length > 0 && (() => {
-            const latestNirName = excelState.maxNirNum > 0 ? `Nir ${excelState.maxNirNum}` : null;
+            const isNirSheet = (name) => /^(?:Nir\s*)?[0-9]+$/i.test(String(name).trim());
+            const latestNirName = excelState.lastNirSheetName || (excelState.maxNirNum > 0 ? (excelState.sheetsList.includes(String(excelState.maxNirNum)) ? String(excelState.maxNirNum) : `Nir ${excelState.maxNirNum}`) : null);
+
+            // Selectăm doar NIR-urile populate efectiv cu facturi
+            const populatedSheetNames = (excelState.existingInvoices || []).map(inv => inv.sheetName);
             const olderNirSheets = (excelState.sheetsList || [])
-              .filter(name => /^Nir\s*/i.test(name) && name !== latestNirName)
+              .filter(name => isNirSheet(name) && name !== latestNirName && (populatedSheetNames.length === 0 || populatedSheetNames.includes(name)))
               .sort((a, b) => {
-                const numA = parseInt(a.replace(/\D+/g, '') || '0', 10);
-                const numB = parseInt(b.replace(/\D+/g, '') || '0', 10);
+                const numA = parseInt(String(a).replace(/\D+/g, '') || '0', 10);
+                const numB = parseInt(String(b).replace(/\D+/g, '') || '0', 10);
                 return numB - numA;
               })
               .slice(0, 10);
+
+            const latestNirDisplay = excelState.maxNirNum > 0 ? `NIR ${excelState.maxNirNum}` : latestNirName;
+            const gestiuneLabel = excelState.gestiuneSheetName === 'G' ? 'Gestiune (G)' : (excelState.gestiuneSheetName || 'Gestiune');
 
             return (
               <div className={styles.sheetsRow}>
@@ -120,7 +127,7 @@ export function ExcelConnector({
                     }}
                     title="Click pentru a vizualiza foaia Gestiune în tabelul de mai jos"
                   >
-                    <span>Gestiune</span>
+                    <span>{gestiuneLabel}</span>
                     <Table size={13} className={styles.eyeIcon} />
                   </button>
 
@@ -129,9 +136,9 @@ export function ExcelConnector({
                     <button
                       className={`${styles.sheetChip} ${styles.sheetLatest}`}
                       onClick={() => onViewSheet && onViewSheet(latestNirName)}
-                      title={`Click pentru a vizualiza ${latestNirName} direct în aplicație`}
+                      title={`Click pentru a vizualiza ${latestNirDisplay} direct în aplicație`}
                     >
-                      <span>{latestNirName}</span>
+                      <span>{latestNirDisplay}</span>
                       <span className={styles.newDot}>ULTIMUL NIR</span>
                       <Eye size={13} className={styles.eyeIcon} />
                     </button>
@@ -143,22 +150,26 @@ export function ExcelConnector({
                       <button
                         className={styles.toggleOlderBtn}
                         onClick={() => setShowAllSheets(prev => !prev)}
-                        title="Comută afișarea ultimelor 10 NIR-uri"
+                        title="Comută afișarea ultimelor NIR-uri înregistrate"
                       >
-                        {showAllSheets ? 'Ascunde istoricul' : `+ ${olderNirSheets.length} NIR-uri recente`}
+                        {showAllSheets ? 'Ascunde istoricul' : `+ ${olderNirSheets.length} NIR-uri anterioare`}
                       </button>
 
-                      {showAllSheets && olderNirSheets.map((name) => (
-                        <button
-                          key={name}
-                          className={styles.sheetChip}
-                          onClick={() => onViewSheet && onViewSheet(name)}
-                          title={`Click pentru a vizualiza ${name}`}
-                        >
-                          <span>{name}</span>
-                          <Eye size={13} className={styles.eyeIcon} />
-                        </button>
-                      ))}
+                      {showAllSheets && olderNirSheets.map((name) => {
+                        const nirNum = parseInt(String(name).replace(/\D+/g, '') || '0', 10);
+                        const displayName = nirNum > 0 ? `NIR ${nirNum}` : name;
+                        return (
+                          <button
+                            key={name}
+                            className={styles.sheetChip}
+                            onClick={() => onViewSheet && onViewSheet(name)}
+                            title={`Click pentru a vizualiza ${displayName}`}
+                          >
+                            <span>{displayName}</span>
+                            <Eye size={13} className={styles.eyeIcon} />
+                          </button>
+                        );
+                      })}
                     </>
                   )}
                 </div>

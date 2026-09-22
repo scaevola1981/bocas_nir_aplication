@@ -136,6 +136,8 @@
   border-radius: var(--radius-md);
   font-size: 0.875rem;
   font-weight: 600;
+  white-space: pre-line;
+  line-height: 1.5;
 }
 
 /* Inset display tiles for key parameters */

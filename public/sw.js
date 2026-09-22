@@ -1,5 +1,5 @@
 // Service Worker for Bocas Project PWA Desktop App
-const CACHE_NAME = 'bocas-pwa-v1';
+const CACHE_NAME = 'bocas-pwa-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -16,9 +16,38 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network first with fallback or standard fetch
   if (event.request.method !== 'GET') return;
+  if (!event.request.url.startsWith('http')) return;
+
+  const url = new URL(event.request.url);
+  // Do not intercept cross-origin analytics/sentry/external requests
+  if (url.origin !== self.location.origin) return;
+
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(async () => {
+        const cachedResponse = await caches.match(event.request);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        if (event.request.mode === 'navigate') {
+          const cachedIndex = await caches.match('/');
+          if (cachedIndex) return cachedIndex;
+        }
+        return new Response('Rețeaua nu este disponibilă.', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: new Headers({ 'Content-Type': 'text/plain; charset=utf-8' })
+        });
+      })
   );
 });
