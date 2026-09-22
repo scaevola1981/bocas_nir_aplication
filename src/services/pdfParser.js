@@ -1,8 +1,8 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import { cleanSupplierName, mapUnitCode } from './xmlParser.js';
 
-// Use CDN worker for maximum browser stability without bundler path issues
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '3.11.174'}/pdf.worker.min.js`;
+// Worker 100% local (fără cereri externe către CDN, pentru confidențialitate totală offline)
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 export async function parseInvoicePdf(arrayBuffer) {
   const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });

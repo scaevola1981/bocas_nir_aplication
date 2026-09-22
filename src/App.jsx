@@ -11,7 +11,6 @@ import { LiveExcelExplorer } from './components/LiveExcelExplorer';
 import { InstructionsModal } from './components/InstructionsModal';
 import { parseInvoicePdf } from './services/pdfParser';
 import { parseInvoiceXml } from './services/xmlParser';
-import * as Sentry from '@sentry/react';
 import { Info, HelpCircle } from 'lucide-react';
 import styles from './App.module.css';
 
@@ -103,9 +102,6 @@ export function App() {
       setSuccessResult(null);
     } catch (err) {
       console.error(err);
-      Sentry.captureException(err, {
-        tags: { context: 'connect_excel' }
-      });
       setExcelError(`Eroare la deschiderea fișierului Excel: ${err.message}`);
     } finally {
       setLoadingExcel(false);
@@ -168,9 +164,6 @@ export function App() {
       }
     } catch (err) {
       console.error(err);
-      Sentry.captureException(err, {
-        tags: { context: 'parse_invoice' }
-      });
       setErrorMsg(`Eroare la citirea facturii: ${err.message}`);
     } finally {
       setProcessingInvoice(false);
@@ -263,9 +256,6 @@ export function App() {
       }
     } catch (err) {
       console.error(err);
-      Sentry.captureException(err, {
-        tags: { context: 'save_nir_excel' }
-      });
       setErrorMsg(`Eroare la scrierea în Excel: ${err.message}`);
     } finally {
       setSavingNir(false);
