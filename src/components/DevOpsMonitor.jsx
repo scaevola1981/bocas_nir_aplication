@@ -18,7 +18,8 @@ import {
   Copy, 
   ExternalLink,
   Lock,
-  HardDrive
+  HardDrive,
+  Bell
 } from 'lucide-react';
 import { 
   getIncidents, 
@@ -27,6 +28,7 @@ import {
   exportDiagnosticsReport,
   recordIncident
 } from '../services/localHealthStore';
+import { sendRemoteErrorAlert, getRemoteAlertTopic } from '../services/remoteTelemetry';
 import { parseInvoiceXml } from '../services/xmlParser';
 import styles from './DevOpsMonitor.module.css';
 
@@ -37,6 +39,7 @@ export function DevOpsMonitor({ excelState, onBackToApp }) {
   const [runningTest, setRunningTest] = useState(null);
   const [testResult, setTestResult] = useState(null);
   const [expandedIncidentId, setExpandedIncidentId] = useState(null);
+  const [streamConnected, setStreamConnected] = useState(false);
 
   // Ceas în timp real
   useEffect(() => {
@@ -52,6 +55,68 @@ export function DevOpsMonitor({ excelState, onBackToApp }) {
       setIncidents(updated);
     });
     return unsubscribe;
+  }, []);
+
+  // Ascultător Stream SSE în Timp Real pentru alertele primite de la calculatorul clientului
+  useEffect(() => {
+    let eventSource;
+    try {
+      const topic = getRemoteAlertTopic();
+      eventSource = new EventSource(`https://ntfy.sh/${topic}/sse`);
+
+      eventSource.onopen = () => {
+        setStreamConnected(true);
+      };
+
+      eventSource.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.event === 'message') {
+            // Semnal sonor discret pentru notificare
+            try {
+              const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+              osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+              gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+              osc.connect(gain);
+              gain.connect(audioCtx.destination);
+              osc.start();
+              osc.stop(audioCtx.currentTime + 0.35);
+            } catch (err) {
+              // Browser policy ignore
+            }
+
+            const remoteInc = {
+              id: 'remote_' + (data.id || Date.now()),
+              timestamp: new Date((data.time || Date.now()/1000) * 1000).toLocaleTimeString('ro-RO'),
+              date: new Date((data.time || Date.now()/1000) * 1000).toLocaleDateString('ro-RO'),
+              context: data.title || 'REMOTE_CLIENT',
+              message: data.message || 'Alertă tehnică recepționată de la client',
+              isRemote: true,
+              severity: 'CRITIC'
+            };
+
+            setIncidents(prev => [remoteInc, ...prev.filter(i => i.id !== remoteInc.id)]);
+          }
+        } catch (parseErr) {
+          console.error('Eroare parsare eveniment remote:', parseErr);
+        }
+      };
+
+      eventSource.onerror = () => {
+        setStreamConnected(false);
+      };
+    } catch (err) {
+      console.warn('Nu s-a putut inițializa EventSource SSE:', err);
+    }
+
+    return () => {
+      if (eventSource) eventSource.close();
+    };
   }, []);
 
   const handleRefresh = () => {
@@ -162,6 +227,31 @@ export function DevOpsMonitor({ excelState, onBackToApp }) {
     } finally {
       setRunningTest(null);
       setTimeout(() => setTestResult(null), 5000);
+    }
+  };
+
+  // Test 4: Trimite Alertă Tehnică de Test pe Canalul Privat (ntfy)
+  const handleSendTestAlert = async () => {
+    setRunningTest('alert');
+    try {
+      await sendRemoteErrorAlert(
+        'TEST_DIAGNOZA',
+        'Aceasta este o alertă tehnică de probă trimisă din panoul de test DevOps.',
+        { component: 'DevOpsMonitor' },
+        'high'
+      );
+      setTestResult({
+        type: 'success',
+        msg: 'Alertă de test expediată pe canalul privat! Ar trebui să o recepționezi în timp real.'
+      });
+    } catch (err) {
+      setTestResult({
+        type: 'error',
+        msg: `Eșec trimitere alertă: ${err.message}`
+      });
+    } finally {
+      setRunningTest(null);
+      setTimeout(() => setTestResult(null), 4000);
     }
   };
 
@@ -353,6 +443,16 @@ export function DevOpsMonitor({ excelState, onBackToApp }) {
           </button>
 
           <button 
+            className={`${styles.toolBtn} ${styles.toolBtnBlue}`}
+            onClick={handleSendTestAlert}
+            disabled={runningTest === 'alert'}
+            title="Trimite o alertă tehnică de probă către canalul privat securizat"
+          >
+            <Bell size={14} />
+            <span>{runningTest === 'alert' ? 'Se expediază...' : 'Trimite Alertă Test (ntfy)'}</span>
+          </button>
+
+          <button 
             className={`${styles.toolBtn} ${styles.toolBtnRed}`}
             onClick={handleClearLogs}
             disabled={incidents.length === 0}
@@ -370,8 +470,8 @@ export function DevOpsMonitor({ excelState, onBackToApp }) {
           </button>
 
           <div className={styles.channelStatus}>
-            <span className={styles.pulseDot}></span>
-            <span>Canal Local Privat: Fără Ieșire Internet</span>
+            <span className={streamConnected ? styles.pulseDot : styles.dotWarn}></span>
+            <span>{streamConnected ? 'Canal ntfy Sincronizat (Live Stream)' : 'Canal Privat Pregătit'}</span>
           </div>
         </div>
       </div>
@@ -420,7 +520,23 @@ export function DevOpsMonitor({ excelState, onBackToApp }) {
                   className={`${styles.incidentCard} ${inc.severity === 'ATENTIE' ? styles.incidentCardWarn : ''}`}
                 >
                   <div className={styles.incidentTop}>
-                    <span className={styles.incidentContext}>{inc.context}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className={styles.incidentContext}>{inc.context}</span>
+                      {inc.isRemote && (
+                        <span style={{ 
+                          fontSize: '10px', 
+                          fontWeight: '800', 
+                          background: 'linear-gradient(135deg, #ef4444, #dc2626)', 
+                          color: '#ffffff', 
+                          padding: '2px 7px', 
+                          borderRadius: '4px',
+                          letterSpacing: '0.4px',
+                          boxShadow: '0 0 10px rgba(239, 68, 68, 0.4)'
+                        }}>
+                          ⚡ REMOTE (CLIENT PC)
+                        </span>
+                      )}
+                    </div>
                     <span className={styles.incidentTime}>{inc.date} {inc.timestamp}</span>
                   </div>
                   <div className={styles.incidentMsg}>

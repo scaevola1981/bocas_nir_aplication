@@ -1,5 +1,4 @@
-// localHealthStore.js - Sistem 100% local de telemetrie, diagnoză și audit de sănătate
-// ZERO OUTBOUND CALLS - Toate datele rămân exclusiv în memoria locală și localStorage
+import { sendRemoteErrorAlert } from './remoteTelemetry';
 
 const STORAGE_KEY = 'bocas_health_incidents_v1';
 const MAX_INCIDENTS = 50;
@@ -50,6 +49,12 @@ export function recordIncident(context, message, details = {}, severity = 'CRITI
     const updated = [newIncident, ...incidents].slice(0, MAX_INCIDENTS);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     notifyListeners();
+
+    // Notificare automată anonimizată pe canalul privat de suport
+    if (severity === 'CRITIC' || severity === 'ATENTIE') {
+      sendRemoteErrorAlert(context, message, details, severity);
+    }
+
     return newIncident;
   } catch (err) {
     console.error('Nu s-a putut salva incidentul local:', err);

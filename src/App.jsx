@@ -17,7 +17,9 @@ import { Info, HelpCircle } from 'lucide-react';
 import styles from './App.module.css';
 
 export function App() {
-  const [activeView, setActiveView] = useState('app'); // 'app' | 'devops'
+  const [activeView, setActiveView] = useState(() => {
+    return new URLSearchParams(window.location.search).get('view') === 'devops' ? 'devops' : 'app';
+  });
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [excelState, setExcelState] = useState({
     connected: false,
