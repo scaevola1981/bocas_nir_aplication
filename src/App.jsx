@@ -73,6 +73,19 @@ export function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  // Scurtătură secretă rezervată exclusiv pentru administrator (Ctrl + Shift + D sau Cmd + Shift + D)
+  // Nu este afișat niciun buton vizibil în interfața clientului
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        setActiveView(prev => (prev === 'app' ? 'devops' : 'app'));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Clientul își alege singur fișierul Excel la prima utilizare prin butonul de conectare.
   // Nu se mai forțează automat niciun fișier predefinit pe ecran.
 
@@ -307,8 +320,6 @@ export function App() {
         onOpenHelp={() => setShowHelpModal(true)}
         theme={theme}
         onToggleTheme={handleToggleTheme}
-        activeView={activeView}
-        onToggleDevOps={() => setActiveView(prev => prev === 'app' ? 'devops' : 'app')}
       />
 
       {activeView === 'devops' ? (

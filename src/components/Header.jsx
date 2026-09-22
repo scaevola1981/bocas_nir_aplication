@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, DownloadCloud, X, CheckCircle2, Laptop, HelpCircle, Sun, Moon, Activity } from 'lucide-react';
+import { ShieldCheck, DownloadCloud, X, CheckCircle2, Laptop, HelpCircle, Sun, Moon } from 'lucide-react';
 import styles from './Header.module.css';
 
-export function Header({ excelConnected, excelFileName, nextNir, nextCod, onOpenHelp, theme, onToggleTheme, activeView, onToggleDevOps }) {
+export function Header({ excelConnected, excelFileName, nextNir, nextCod, onOpenHelp, theme, onToggleTheme }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -80,18 +80,6 @@ export function Header({ excelConnected, excelFileName, nextNir, nextCod, onOpen
             aria-label="Instrucțiuni"
           >
             <HelpCircle size={18} />
-          </button>
-
-          {/* Buton DevOps & Monitor Erori */}
-          <button
-            type="button"
-            className={`${styles.devOpsBtn} ${activeView === 'devops' ? styles.devOpsBtnActive : ''}`}
-            onClick={onToggleDevOps}
-            title={activeView === 'devops' ? 'Revenire la Gestiune e-Factură & NIR' : 'Panou DevOps, Diagnoză & Monitor Erori Live'}
-            aria-label="DevOps & Monitor Erori"
-          >
-            <Activity size={16} />
-            <span>{activeView === 'devops' ? 'Gestiune NIR' : 'DevOps Monitor'}</span>
           </button>
 
           {/* Buton instalare pe Desktop ca aplicație normală */}
