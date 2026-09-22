@@ -106,6 +106,38 @@
   box-shadow: var(--neu-pressed);
 }
 
+.devOpsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  color: #c084fc;
+  padding: 0.5rem 0.95rem;
+  border-radius: var(--radius-md);
+  font-size: 0.825rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.2);
+}
+
+.devOpsBtn:hover {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: #d8b4fe;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
+}
+
+.devOpsBtnActive {
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  color: #ffffff;
+  border-color: #c084fc;
+  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.45);
+}
+
 .installBtn {
   display: inline-flex;
   align-items: center;

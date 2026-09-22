@@ -11,10 +11,13 @@ import { LiveExcelExplorer } from './components/LiveExcelExplorer';
 import { InstructionsModal } from './components/InstructionsModal';
 import { parseInvoicePdf } from './services/pdfParser';
 import { parseInvoiceXml } from './services/xmlParser';
+import { DevOpsMonitor } from './components/DevOpsMonitor';
+import { recordIncident } from './services/localHealthStore';
 import { Info, HelpCircle } from 'lucide-react';
 import styles from './App.module.css';
 
 export function App() {
+  const [activeView, setActiveView] = useState('app'); // 'app' | 'devops'
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [excelState, setExcelState] = useState({
     connected: false,
@@ -102,6 +105,7 @@ export function App() {
       setSuccessResult(null);
     } catch (err) {
       console.error(err);
+      recordIncident('connect_excel', err.message, { stack: err.stack, fileName: fileData?.handle?.name }, 'CRITIC');
       setExcelError(`Eroare la deschiderea fișierului Excel: ${err.message}`);
     } finally {
       setLoadingExcel(false);
@@ -164,6 +168,7 @@ export function App() {
       }
     } catch (err) {
       console.error(err);
+      recordIncident('parse_invoice', err.message, { stack: err.stack }, 'CRITIC');
       setErrorMsg(`Eroare la citirea facturii: ${err.message}`);
     } finally {
       setProcessingInvoice(false);
@@ -256,6 +261,7 @@ export function App() {
       }
     } catch (err) {
       console.error(err);
+      recordIncident('save_nir_excel', err.message, { stack: err.stack }, 'CRITIC');
       setErrorMsg(`Eroare la scrierea în Excel: ${err.message}`);
     } finally {
       setSavingNir(false);
@@ -299,9 +305,17 @@ export function App() {
         onOpenHelp={() => setShowHelpModal(true)}
         theme={theme}
         onToggleTheme={handleToggleTheme}
+        activeView={activeView}
+        onToggleDevOps={() => setActiveView(prev => prev === 'app' ? 'devops' : 'app')}
       />
 
-      <main className={styles.mainContent}>
+      {activeView === 'devops' ? (
+        <DevOpsMonitor 
+          excelState={excelState}
+          onBackToApp={() => setActiveView('app')}
+        />
+      ) : (
+        <main className={styles.mainContent}>
         <SuccessBanner
           result={successResult}
           onDismiss={() => setSuccessResult(null)}
@@ -356,6 +370,7 @@ export function App() {
           onTabChange={setActiveLiveTab}
         />
       </main>
+      )}
 
       {/* Review & Edit Modal for incoming invoice */}
       {currentReviewInvoice && (
