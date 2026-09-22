@@ -4,3 +4,20 @@ dist_electron
 .vercel
 .DS_Store
 *.local
+
+# Documente și date confidențiale clienți (Protecție strictă)
+*.xlsx
+*.xls
+*.xlsm
+*.csv
+*.pdf
+*.xml
+*.pfx
+*.pem
+*.key
+*.env
+*.env.*
+*.log
+scratch/
+temp/
+test_data/
