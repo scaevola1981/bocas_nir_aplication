@@ -154,11 +154,14 @@ export function App() {
         if (parsedData) {
           parsedData.originalFileName = file.name;
           // Duplicate verification against existing NIR sheets and earlier files in this batch (by number & products):
+          const totalVal = (parsedData.items || []).reduce((acc, curr) => acc + (curr.totalWithoutVat || 0), 0) || parsedData.totalInvoice || 0;
           const dupCheck = checkInvoiceDuplicate(
             allInvoicesToCheck,
             parsedData.invoiceNumber,
             parsedData.supplierName,
-            parsedData.items
+            parsedData.items,
+            totalVal,
+            parsedData.invoiceDate
           );
           parsedData.duplicateWarning = dupCheck;
           parsedList.push(parsedData);
@@ -169,7 +172,8 @@ export function App() {
             invoiceNumber: parsedData.invoiceNumber,
             supplierName: parsedData.supplierName,
             invoiceDate: parsedData.invoiceDate,
-            items: parsedData.items
+            items: parsedData.items,
+            totalNir: totalVal
           });
         }
       }

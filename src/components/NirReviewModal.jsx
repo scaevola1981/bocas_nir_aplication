@@ -55,7 +55,8 @@ export function NirReviewModal({
             <div className={styles.dupContent}>
               <h4 className={styles.dupTitle}>🛡️ SIGURANȚĂ ACTIVATĂ: FACTURĂ DEJA ÎNREGISTRATĂ!</h4>
               <p className={styles.dupText}>
-                Factura cu numărul <strong>{invoiceData.invoiceNumber}</strong> există deja în fișierul Excel în foaia <strong>{invoiceData.duplicateWarning.existingSheet}</strong>
+                Factura cu numărul <strong>{invoiceData.invoiceNumber}</strong> figurează deja asociată în fișierul Excel în foaia <strong>{invoiceData.duplicateWarning.existingSheet}</strong>
+                {invoiceData.duplicateWarning.existingNumber && invoiceData.duplicateWarning.existingNumber !== invoiceData.invoiceNumber ? ` (factură existentă pe foaie: "${invoiceData.duplicateWarning.existingNumber}")` : ''}
                 {invoiceData.duplicateWarning.existingSupplier ? ` (Furnizor: ${invoiceData.duplicateWarning.existingSupplier})` : ''}
                 {invoiceData.duplicateWarning.existingDate ? ` din data de ${invoiceData.duplicateWarning.existingDate}` : ''}.
               </p>

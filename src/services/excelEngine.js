@@ -167,8 +167,54 @@ export async function analyzeExcelWorkbook(arrayBuffer) {
   };
 }
 
-// Check if an incoming invoice is already recorded in the existing NIR sheets (by number OR by items)
-export function checkInvoiceDuplicate(existingInvoices, newInvoiceNumber, newSupplierName, newItems = [], newTotal = 0) {
+export function normalizeDate(dateStr) {
+  if (!dateStr) return '';
+  const s = String(dateStr).trim();
+  const isoMatch = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if (isoMatch) {
+    return `${isoMatch[3].padStart(2, '0')}${isoMatch[2].padStart(2, '0')}${isoMatch[1]}`;
+  }
+  const roMatch = s.match(/^(\d{1,2})[-/.,](\d{1,2})[-/.,](\d{4})/);
+  if (roMatch) {
+    return `${roMatch[1].padStart(2, '0')}${roMatch[2].padStart(2, '0')}${roMatch[3]}`;
+  }
+  return s.replace(/\D/g, '');
+}
+
+export function areDatesMatching(d1, d2) {
+  const norm1 = normalizeDate(d1);
+  const norm2 = normalizeDate(d2);
+  if (!norm1 || !norm2) return false;
+  return norm1 === norm2;
+}
+
+export function areSuppliersMatching(s1, s2) {
+  if (!s1 || !s2) return false;
+  const clean = (str) => String(str)
+    .toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\b(S\.?R\.?L\.?|S\.?A\.?|S\.?C\.?|SRL|SA|SC|PFA|II|IF|ROMANIA|SOCIETATEA|COM|IMPEX)\b/gi, '')
+    .replace(/[^A-Z0-9]/g, '');
+
+  const c1 = clean(s1);
+  const c2 = clean(s2);
+  if (!c1 || !c2) return false;
+  if (c1 === c2) return true;
+  if (c1.length >= 4 && c2.length >= 4) {
+    if (c1.includes(c2) || c2.includes(c1)) return true;
+  }
+  return false;
+}
+
+// Check if an incoming invoice is already recorded in the existing NIR sheets
+export function checkInvoiceDuplicate(
+  existingInvoices,
+  newInvoiceNumber,
+  newSupplierName,
+  newItems = [],
+  newTotal = 0,
+  newInvoiceDate = ''
+) {
   if (!existingInvoices || !existingInvoices.length) return { isDuplicate: false };
 
   const cleanStr = (str) => String(str || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -183,46 +229,77 @@ export function checkInvoiceDuplicate(existingInvoices, newInvoiceNumber, newSup
     const existingDigits = getDigits(inv.invoiceNumber);
     const existingNormDigits = existingDigits.replace(/^0+/, '');
 
-    // 1. Check Invoice Number match
-    let isMatch = false;
-    if (targetClean.length >= 3 && existingClean.length >= 3) {
-      if (targetClean === existingClean) isMatch = true;
-      if (!isMatch && targetDigits.length >= 4 && existingDigits.length >= 4 && targetDigits === existingDigits) isMatch = true;
-      if (!isMatch && targetNormDigits.length >= 4 && existingNormDigits.length >= 4 && targetNormDigits === existingNormDigits) isMatch = true;
-      if (!isMatch) {
-        if (targetClean.length >= 4 && existingClean.length >= 4) {
-          if (targetClean.includes(existingClean) || existingClean.includes(targetClean)) isMatch = true;
-        }
-        if (!isMatch && targetNormDigits.length >= 4 && existingNormDigits.length >= 4) {
-          if (targetNormDigits.endsWith(existingNormDigits) || existingNormDigits.endsWith(targetNormDigits)) isMatch = true;
+    const hasTargetNum = targetClean.length >= 2;
+    const hasExistingNum = existingClean.length >= 2;
+
+    // CAZ 1: Ambele documente au număr de factură explicit
+    if (hasTargetNum && hasExistingNum) {
+      let isNumberMatch = false;
+
+      // Potrivire exactă alfanumerică
+      if (targetClean === existingClean) {
+        isNumberMatch = true;
+      } else if (targetDigits.length >= 4 && existingDigits.length >= 4 && targetDigits === existingDigits) {
+        isNumberMatch = true;
+      } else if (targetNormDigits.length >= 3 && existingNormDigits.length >= 3 && targetNormDigits === existingNormDigits) {
+        isNumberMatch = true;
+      }
+
+      if (isNumberMatch) {
+        // Dacă ambele au furnizor specificat, verificăm dacă e același furnizor
+        const supplierMatches = !newSupplierName || !inv.supplierName || areSuppliersMatching(newSupplierName, inv.supplierName);
+        if (supplierMatches) {
+          return {
+            isDuplicate: true,
+            matchReason: 'invoice_number',
+            existingSheet: inv.sheetName,
+            existingNumber: inv.invoiceNumber || 'Fără număr',
+            existingSupplier: inv.supplierName,
+            existingDate: inv.invoiceDate
+          };
         }
       }
+
+      // CRITICAL: Ambele facturi au numere explicite și sunt DIFERITE (ex: 4401356219 vs 4401355420).
+      // Sunt facturi fiscale distincte! Nu se trece NICIODATĂ la fallback de produse identice!
+      continue;
     }
 
-    // 2. Content fallback match (if same products & quantities or total)
-    if (!isMatch && inv.items && inv.items.length > 0 && newItems && newItems.length > 0) {
-      const matchCount = newItems.filter(ni => {
-        const niName = cleanStr(ni.name);
-        return inv.items.some(ei => {
-          const eiClean = cleanStr(ei.name);
-          return (eiClean.includes(niName) || niName.includes(eiClean)) && Math.abs(Number(ei.quantity) - Number(ni.quantity)) < 0.01;
-        });
-      }).length;
+    // CAZ 2: Fallback DOAR dacă cel puțin una dintre facturi NU are număr (ex: NIR manual necompletat în Excel)
+    if (!hasTargetNum || !hasExistingNum) {
+      const supplierMatches = newSupplierName && inv.supplierName && areSuppliersMatching(newSupplierName, inv.supplierName);
+      if (!supplierMatches) continue;
 
-      const minThreshold = Math.min(2, newItems.length);
-      if (matchCount >= minThreshold && (newItems.length === inv.items.length || Math.abs(matchCount - newItems.length) <= 1)) {
-        isMatch = true;
+      // Dacă ambele au date și datele diferă, sunt achiziții diferite
+      if (newInvoiceDate && inv.invoiceDate && !areDatesMatching(newInvoiceDate, inv.invoiceDate)) {
+        continue;
       }
-    }
 
-    if (isMatch) {
-      return {
-        isDuplicate: true,
-        existingSheet: inv.sheetName,
-        existingNumber: inv.invoiceNumber || 'Fără număr',
-        existingSupplier: inv.supplierName,
-        existingDate: inv.invoiceDate
-      };
+      // Comparăm produsele și totalurile
+      if (inv.items && inv.items.length > 0 && newItems && newItems.length > 0) {
+        const matchCount = newItems.filter(ni => {
+          const niName = cleanStr(ni.name);
+          return inv.items.some(ei => {
+            const eiClean = cleanStr(ei.name);
+            return (eiClean.includes(niName) || niName.includes(eiClean)) && Math.abs(Number(ei.quantity) - Number(ni.quantity)) < 0.01;
+          });
+        }).length;
+
+        const isSingleItem = newItems.length === 1 && inv.items.length === 1;
+        const totalMatches = newTotal > 0 && inv.totalNir > 0 && Math.abs(newTotal - inv.totalNir) < 0.5;
+
+        if ((matchCount >= 2 && matchCount === newItems.length && newItems.length === inv.items.length) ||
+            (isSingleItem && matchCount === 1 && (totalMatches || areDatesMatching(newInvoiceDate, inv.invoiceDate)))) {
+          return {
+            isDuplicate: true,
+            matchReason: 'content_fallback',
+            existingSheet: inv.sheetName,
+            existingNumber: inv.invoiceNumber || 'Fără număr',
+            existingSupplier: inv.supplierName,
+            existingDate: inv.invoiceDate
+          };
+        }
+      }
     }
   }
 
@@ -304,9 +381,12 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
   } = analysis;
 
   // Duplicate safety check: verify against all existing invoices in the workbook
-  const dupCheck = checkInvoiceDuplicate(analysis.existingInvoices, invoiceNumber, supplierName, validItems);
+  const validTotal = validItems.reduce((acc, curr) => acc + (curr.totalWithoutVat || 0), 0);
+  const dupCheck = checkInvoiceDuplicate(analysis.existingInvoices, invoiceNumber, supplierName, validItems, validTotal, invoiceDate);
   if (dupCheck.isDuplicate && !invoiceData.forceDuplicate) {
-    throw new Error(`SIGURANȚĂ ACTIVATĂ: Factura "${invoiceNumber || 'fără număr'}" figurează deja înregistrată în Excel (foaia ${dupCheck.existingSheet}, furnizor: ${dupCheck.existingSupplier || 'Nespecificat'}). Pentru a preveni dublarea accidentală a stocurilor în gestiune, generarea NIR a fost oprită.`);
+    const sheetNumInfo = dupCheck.existingNumber ? ` (factura înregistrată: "${dupCheck.existingNumber}")` : '';
+    const dateInfo = dupCheck.existingDate ? ` din data de ${dupCheck.existingDate}` : '';
+    throw new Error(`SIGURANȚĂ ACTIVATĂ: Factura "${invoiceNumber || 'fără număr'}" figurează deja înregistrată în Excel (foaia ${dupCheck.existingSheet}${sheetNumInfo}, furnizor: ${dupCheck.existingSupplier || 'Nespecificat'}${dateInfo}). Pentru a preveni dublarea accidentală a stocurilor în gestiune, generarea NIR a fost oprită.`);
   }
 
   // Respectăm convenția de denumire a foilor NIR din registrul utilizatorului (ex: "Nir 13" sau simplu "13")
@@ -376,14 +456,29 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
     newSheet.getCell(`G${r}`).value = '';
   }
 
-  // NIR Total Formulas
-  newSheet.getCell('B37').value = 'TOTAL';
-  newSheet.getCell('F37').value = { formula: 'SUM(F15:F36)' };
+  // NIR Total Formulas & Formatting (Garantăm F37 Bold mărime 10, F38 Normal mărime 8)
+  const b37Cell = newSheet.getCell('B37');
+  b37Cell.value = 'TOTAL';
+  b37Cell.font = { ...(b37Cell.font || {}), name: 'Calibri', size: 10, bold: true };
+
+  const f37Cell = newSheet.getCell('F37');
+  f37Cell.value = { formula: 'SUM(F15:F36)' };
+  f37Cell.font = { ...(f37Cell.font || {}), name: 'Calibri', size: 10, bold: true };
   
+  const f38Cell = newSheet.getCell('F38');
   if (lastNirSheetName) {
-    newSheet.getCell('F38').value = { formula: `F37+'${lastNirSheetName}'!F38` };
+    f38Cell.value = { formula: `F37+'${lastNirSheetName}'!F38` };
   } else {
-    newSheet.getCell('F38').value = { formula: 'F37' };
+    f38Cell.value = { formula: 'F37' };
+  }
+  f38Cell.font = { ...(f38Cell.font || {}), name: 'Calibri', size: 8, bold: false };
+
+  // Asigurăm că liniile de produse (rândurile 15-36) au stil normal, fără bold accidental (cum se întâmplase pe rândul 22)
+  for (let r = 15; r <= 36; r++) {
+    const fCell = newSheet.getCell(`F${r}`);
+    if (fCell.font && fCell.font.bold) {
+      fCell.font = { ...fCell.font, bold: false };
+    }
   }
 
   // 4. Update Gestiune Sheet (Insert BEFORE Total Row)
@@ -455,6 +550,9 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
     totalRow.commit();
   }
 
+  // Repară și standardizează automat stilurile tuturor foilor NIR din registru (inclusiv cele anterioare)
+  repairAllNirSheetsFormatting(workbook);
+
   return {
     nextNirNum,
     nirSheetName,
@@ -463,6 +561,33 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
     firstCod: nextCod,
     lastCod: currentCod - 1
   };
+}
+
+export function repairAllNirSheetsFormatting(workbook) {
+  if (!workbook) return 0;
+  let fixedCount = 0;
+  workbook.eachSheet((sheet) => {
+    const match = sheet.name.trim().match(/^(?:Nir\s*)?([0-9]+)$/i);
+    if (match) {
+      const f37 = sheet.getCell('F37');
+      const f38 = sheet.getCell('F38');
+      const b37 = sheet.getCell('B37');
+
+      b37.value = 'TOTAL';
+      b37.font = { ...(b37.font || {}), name: 'Calibri', size: 10, bold: true };
+      f37.font = { ...(f37.font || {}), name: 'Calibri', size: 10, bold: true };
+      f38.font = { ...(f38.font || {}), name: 'Calibri', size: 8, bold: false };
+
+      for (let r = 15; r <= 36; r++) {
+        const fc = sheet.getCell(`F${r}`);
+        if (fc.font && fc.font.bold) {
+          fc.font = { ...fc.font, bold: false };
+        }
+      }
+      fixedCount++;
+    }
+  });
+  return fixedCount;
 }
 
 function copySheetStructure(srcSheet, destSheet) {
@@ -502,4 +627,9 @@ function setupDefaultNirSheet(sheet) {
   sheet.getCell('E14').value = 'Pret unitar';
   sheet.getCell('F14').value = 'Valoare fara tva';
   sheet.getCell('G14').value = 'Cod intrare';
+
+  sheet.getCell('B37').value = 'TOTAL';
+  sheet.getCell('B37').font = { name: 'Calibri', size: 10, bold: true };
+  sheet.getCell('F37').font = { name: 'Calibri', size: 10, bold: true };
+  sheet.getCell('F38').font = { name: 'Calibri', size: 8, bold: false };
 }

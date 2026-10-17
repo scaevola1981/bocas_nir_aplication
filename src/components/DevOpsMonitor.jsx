@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ExcelJS from 'exceljs';
 import { 
   Activity, 
   RefreshCw, 
@@ -133,7 +134,6 @@ export function DevOpsMonitor({ excelState, onBackToApp }) {
     setRunningTest('excel');
     try {
       const startTime = performance.now();
-      const ExcelJS = (await import('exceljs')).default;
       const wb = new ExcelJS.Workbook();
       const ws = wb.addWorksheet('Benchmark');
       for (let r = 1; r <= 200; r++) {

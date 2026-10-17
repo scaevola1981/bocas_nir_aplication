@@ -27,28 +27,7 @@ function sanitizeErrorMessage(msg) {
 }
 
 export async function sendRemoteErrorAlert(context, rawMessage, details = {}, priority = 'high') {
-  try {
-    const cleanMsg = sanitizeErrorMessage(rawMessage);
-    const platform = typeof navigator !== 'undefined' ? (navigator.userAgentData?.platform || navigator.platform || 'Unknown OS') : 'PC';
-    
-    // Payload 100% tehnic anonimizat
-    const alertTitle = `🚨 Eroare Client: [${context || 'Sistem'}]`;
-    const alertBody = `Mesaj: ${cleanMsg}\nContext: ${context}\nSistem: ${platform}\nOra: ${new Date().toLocaleTimeString('ro-RO')}`;
-
-    // Trimite către canalul privat secret
-    await fetch(NTFY_URL, {
-      method: 'POST',
-      body: alertBody,
-      headers: {
-        'Title': alertTitle,
-        'Priority': priority === 'urgent' ? 'urgent' : 'high',
-        'Tags': 'warning,desktop_computer,hammer_and_wrench'
-      }
-    });
-
-    console.log('[RemoteTelemetry] Notificare tehnică expediată pe canalul privat de suport.');
-  } catch (err) {
-    // Trimiterea erorii nu trebuie să blocheze niciodată experiența utilizatorului
-    console.warn('[RemoteTelemetry] Nu s-a putut expedia notificarea de telemetrie:', err.message);
-  }
+  // STRICT ZERO-LEAK POLICY: Conform AGENTS.md, nicio conexiune externă sau telemetrie nu este permisă.
+  // Toate incidentele și diagnosticele rămân exclusiv locale în localHealthStore.
+  return;
 }

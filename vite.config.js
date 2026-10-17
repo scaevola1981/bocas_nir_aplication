@@ -23,5 +23,17 @@ export default defineConfig({
   optimizeDeps: {
     include: ['exceljs', 'fast-xml-parser'],
     exclude: ['pdfjs-dist']
+  },
+  build: {
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      onwarn(warning, warn) {
+        // Ignoră avertismentul intern de eval din librăria externă pdfjs-dist
+        if (warning.code === 'EVAL' && warning.id && warning.id.includes('pdfjs-dist')) {
+          return;
+        }
+        warn(warning);
+      }
+    }
   }
 });
