@@ -1,9 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Table, Eye, CheckCircle2, ChevronRight, Download, ChevronDown, Check } from 'lucide-react';
+import { Table, Eye, CheckCircle2, ChevronRight, Download, ChevronDown, Check, Sparkles, RefreshCw } from 'lucide-react';
 import { getGestiuneSheet } from '../services/excelEngine.js';
 import styles from './LiveExcelExplorer.module.css';
 
-export function LiveExcelExplorer({ excelState, onDownloadExcel, activeTab: externalActiveTab, onTabChange }) {
+export function LiveExcelExplorer({
+  excelState,
+  onDownloadExcel,
+  onRepairFormatting,
+  repairing,
+  activeTab: externalActiveTab,
+  onTabChange
+}) {
   const defaultTab = excelState?.gestiuneSheetName || 'Gestiune';
   const [internalTab, setInternalTab] = useState(defaultTab);
   const activeTab = externalActiveTab !== undefined ? externalActiveTab : internalTab;
@@ -67,9 +74,23 @@ export function LiveExcelExplorer({ excelState, onDownloadExcel, activeTab: exte
           </div>
         </div>
 
-        <button className={styles.downloadBtn} onClick={onDownloadExcel}>
-          <Download size={15} /> Descarcă Fișierul (.xlsx)
-        </button>
+        <div className={styles.headerBtnGroup}>
+          {onRepairFormatting && (
+            <button
+              type="button"
+              className={styles.repairBtn}
+              onClick={onRepairFormatting}
+              disabled={repairing}
+              title="Mărește primele 2 rânduri de antet și aliniază cifrele la linia din dreapta pe toate foile NIR și Gestiune"
+            >
+              {repairing ? <RefreshCw className={styles.spinner} size={15} /> : <Sparkles size={15} />}
+              <span>{repairing ? 'Se aliniază...' : 'Aliniază & Repară Formatul'}</span>
+            </button>
+          )}
+          <button className={styles.downloadBtn} onClick={onDownloadExcel}>
+            <Download size={15} /> Descarcă Fișierul (.xlsx)
+          </button>
+        </div>
       </div>
 
       {/* Sheet Tabs Bar: Show Gestiune & Latest NIR only */}

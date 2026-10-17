@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FolderOpen, RefreshCw, Eye, Layers, Table } from 'lucide-react';
+import { FolderOpen, RefreshCw, Eye, Layers, Table, Sparkles } from 'lucide-react';
 import styles from './ExcelConnector.module.css';
 
 export function ExcelConnector({
@@ -8,6 +8,8 @@ export function ExcelConnector({
   onDownloadExcel,
   onViewSheet,
   onViewGestiune,
+  onRepairFormatting,
+  repairing,
   loading,
   error
 }) {
@@ -26,9 +28,19 @@ export function ExcelConnector({
         {excelState.connected && (
           <div className={styles.topActions}>
             <button
+              type="button"
+              className={styles.repairBtn}
+              onClick={onRepairFormatting}
+              disabled={loading || repairing}
+              title="Mărește primele 2 rânduri de antet și aliniază toate cifrele la linia din dreapta pe toate foile NIR și Gestiune"
+            >
+              {repairing ? <RefreshCw className={styles.spinner} size={17} /> : <Sparkles size={17} />}
+              <span>{repairing ? 'Se aliniază...' : 'Aliniază & Repară Formatul Foilor'}</span>
+            </button>
+            <button
               className={styles.connectBtn}
               onClick={onConnectExcel}
-              disabled={loading}
+              disabled={loading || repairing}
             >
               {loading ? (
                 <RefreshCw className={styles.spinner} size={18} />

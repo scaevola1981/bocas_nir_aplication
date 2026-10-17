@@ -434,36 +434,85 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
 
     const safeName = typeof item.name === 'string' && /^[=+\-@]/.test(item.name.trim()) ? `'${item.name}` : item.name;
 
-    newSheet.getCell(`A${r}`).value = idx + 1;
-    newSheet.getCell(`B${r}`).value = safeName;
-    newSheet.getCell(`C${r}`).value = item.um || 'BUC.';
-    newSheet.getCell(`D${r}`).value = Number(item.quantity);
-    newSheet.getCell(`E${r}`).value = effectiveUnitPrice;
-    newSheet.getCell(`F${r}`).value = { formula: `D${r}*E${r}`, result: Number(item.totalWithoutVat) };
-    newSheet.getCell(`G${r}`).value = String(currentCod);
+    // A: nr.crt.
+    const aCell = newSheet.getCell(`A${r}`);
+    aCell.value = idx + 1;
+    aCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    // B: Denumire produs
+    const bCell = newSheet.getCell(`B${r}`);
+    bCell.value = safeName;
+    bCell.alignment = { horizontal: 'left', vertical: 'middle' };
+
+    // C: U/M
+    const cCell = newSheet.getCell(`C${r}`);
+    cCell.value = item.um || 'BUC.';
+    cCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    // D: Cantitate - aliniat la dreapta lângă linia celulei
+    const dCell = newSheet.getCell(`D${r}`);
+    dCell.value = Number(item.quantity);
+    dCell.alignment = { horizontal: 'right', vertical: 'middle' };
+    dCell.numFmt = '#,##0.00';
+
+    // E: Preț unitar - aliniat la dreapta lângă linia celulei
+    const eCell = newSheet.getCell(`E${r}`);
+    eCell.value = effectiveUnitPrice;
+    eCell.alignment = { horizontal: 'right', vertical: 'middle' };
+    eCell.numFmt = '#,##0.00';
+
+    // F: Valoare fără TVA - aliniat la dreapta lângă linia celulei
+    const fCell = newSheet.getCell(`F${r}`);
+    fCell.value = { formula: `D${r}*E${r}`, result: Number(item.totalWithoutVat) };
+    fCell.alignment = { horizontal: 'right', vertical: 'middle' };
+    fCell.numFmt = '#,##0.00';
+    fCell.font = { ...(fCell.font || {}), name: 'Calibri', size: 10, bold: false };
+
+    // G: Cod intrare
+    const gCell = newSheet.getCell(`G${r}`);
+    gCell.value = String(currentCod);
+    gCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
     currentCod++;
   });
 
   // Clear any remaining item rows up to 36 if cloned from a sheet with more rows
   for (let r = 15 + validItems.length; r <= 36; r++) {
-    newSheet.getCell(`A${r}`).value = r - 14;
+    const aCell = newSheet.getCell(`A${r}`);
+    aCell.value = r - 14;
+    aCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
     newSheet.getCell(`B${r}`).value = '';
     newSheet.getCell(`C${r}`).value = '';
-    newSheet.getCell(`D${r}`).value = null;
-    newSheet.getCell(`E${r}`).value = null;
-    newSheet.getCell(`F${r}`).value = 0;
+
+    const dCell = newSheet.getCell(`D${r}`);
+    dCell.value = null;
+    dCell.alignment = { horizontal: 'right', vertical: 'middle' };
+
+    const eCell = newSheet.getCell(`E${r}`);
+    eCell.value = null;
+    eCell.alignment = { horizontal: 'right', vertical: 'middle' };
+
+    const fCell = newSheet.getCell(`F${r}`);
+    fCell.value = 0;
+    fCell.alignment = { horizontal: 'right', vertical: 'middle' };
+    fCell.numFmt = '#,##0.00';
+    fCell.font = { ...(fCell.font || {}), name: 'Calibri', size: 10, bold: false };
+
     newSheet.getCell(`G${r}`).value = '';
   }
 
-  // NIR Total Formulas & Formatting (Garantăm F37 Bold mărime 10, F38 Normal mărime 8)
+  // NIR Total Formulas & Formatting (Garantăm F37 Bold mărime 10, F38 Normal mărime 8, aliniate la dreapta)
   const b37Cell = newSheet.getCell('B37');
   b37Cell.value = 'TOTAL';
   b37Cell.font = { ...(b37Cell.font || {}), name: 'Calibri', size: 10, bold: true };
+  b37Cell.alignment = { horizontal: 'left', vertical: 'middle' };
 
   const f37Cell = newSheet.getCell('F37');
   f37Cell.value = { formula: 'SUM(F15:F36)' };
   f37Cell.font = { ...(f37Cell.font || {}), name: 'Calibri', size: 10, bold: true };
+  f37Cell.alignment = { horizontal: 'right', vertical: 'middle' };
+  f37Cell.numFmt = '#,##0.00';
   
   const f38Cell = newSheet.getCell('F38');
   if (lastNirSheetName) {
@@ -472,14 +521,8 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
     f38Cell.value = { formula: 'F37' };
   }
   f38Cell.font = { ...(f38Cell.font || {}), name: 'Calibri', size: 8, bold: false };
-
-  // Asigurăm că liniile de produse (rândurile 15-36) au stil normal, fără bold accidental (cum se întâmplase pe rândul 22)
-  for (let r = 15; r <= 36; r++) {
-    const fCell = newSheet.getCell(`F${r}`);
-    if (fCell.font && fCell.font.bold) {
-      fCell.font = { ...fCell.font, bold: false };
-    }
-  }
+  f38Cell.alignment = { horizontal: 'right', vertical: 'middle' };
+  f38Cell.numFmt = '#,##0.00';
 
   // 4. Update Gestiune Sheet (Insert BEFORE Total Row)
   const gestiuneSheet = getGestiuneSheet(workbook);
@@ -493,12 +536,20 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
 
     const row = gestiuneSheet.getRow(currentRowIndex);
     const r = currentRowIndex;
+    row.height = 18;
 
     const safeName = typeof item.name === 'string' && /^[=+\-@]/.test(item.name.trim()) ? `'${item.name}` : item.name;
     row.getCell(1).value = safeName; // A: Denumire
+    row.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
+
     row.getCell(2).value = String(item.assignedCod); // B: Cod
+    row.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+
     row.getCell(3).value = String(nirGestiuneCode); // C: NIR
+    row.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+
     row.getCell(4).value = item.um || 'BUC.'; // D: U/M
+    row.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
     
     // E, F, G: Stoc initial
     row.getCell(5).value = null;
@@ -526,11 +577,15 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
     row.getCell(15).value = { formula: `I${r}`, result: effectiveUnitPrice };
     row.getCell(16).value = { formula: `N${r}*O${r}`, result: Number(item.totalWithoutVat) };
 
-    // Copy style from previous product row
+    // Copiază stilul și garantează alinierea numerelor la dreapta pe coloanele 5..16
     const prevRow = gestiuneSheet.getRow(r - 1);
     for (let c = 1; c <= 16; c++) {
       if (prevRow.getCell(c).style) {
         row.getCell(c).style = { ...prevRow.getCell(c).style };
+      }
+      if (c >= 5) {
+        row.getCell(c).alignment = { horizontal: 'right', vertical: 'middle' };
+        row.getCell(c).numFmt = '#,##0.00';
       }
     }
 
@@ -543,15 +598,20 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
   const updatedTotalRowIdx = totalRowNumber ? Math.max(totalRowNumber, currentRowIndex) : null;
   if (updatedTotalRowIdx) {
     const totalRow = gestiuneSheet.getRow(updatedTotalRowIdx);
+    totalRow.height = 22;
     totalRow.getCell(7).value = { formula: `SUM(G5:G${endProductRow})` };
     totalRow.getCell(10).value = { formula: `SUM(J5:J${endProductRow})` };
     totalRow.getCell(13).value = { formula: `SUM(M5:M${endProductRow})` };
     totalRow.getCell(16).value = { formula: `SUM(P5:P${endProductRow})` };
+    [7, 10, 13, 16].forEach(c => {
+      totalRow.getCell(c).alignment = { horizontal: 'right', vertical: 'middle' };
+      totalRow.getCell(c).numFmt = '#,##0.00';
+    });
     totalRow.commit();
   }
 
-  // Repară și standardizează automat stilurile tuturor foilor NIR din registru (inclusiv cele anterioare)
-  repairAllNirSheetsFormatting(workbook);
+  // Repară și standardizează automat stilurile tuturor foilor NIR și Gestiune din registru
+  repairAllWorkbookFormatting(workbook);
 
   return {
     nextNirNum,
@@ -569,25 +629,125 @@ export function repairAllNirSheetsFormatting(workbook) {
   workbook.eachSheet((sheet) => {
     const match = sheet.name.trim().match(/^(?:Nir\s*)?([0-9]+)$/i);
     if (match) {
-      const f37 = sheet.getCell('F37');
-      const f38 = sheet.getCell('F38');
-      const b37 = sheet.getCell('B37');
+      // 1. Mărit primele 2 rânduri ca să încapă antetul firmei și sediul fără să fie tăiate
+      sheet.getRow(1).height = 26; // S.C. BOCAS PROJECT SRL
+      sheet.getRow(2).height = 24; // Nr.R.C./Aut, C.U.I., Sediu
+      sheet.getRow(3).height = 18; // Cont IBAN
+      sheet.getRow(4).height = 18; // Tel.Fax, mobil, mail
+      sheet.getRow(7).height = 24; // NOTE DE INTRARE RECEPTIE
+      sheet.getRow(9).height = 20; // Furnizor
+      sheet.getRow(11).height = 20; // Conform facturii ... din ...
+      sheet.getRow(14).height = 22; // Cap tabel (nr.crt., Denumire...)
 
+      // 2. Aliniere cifre în căsuțe lângă linia din dreapta pentru toate rândurile 15..36
+      for (let r = 15; r <= 36; r++) {
+        sheet.getRow(r).height = 18;
+
+        const cellA = sheet.getCell(`A${r}`);
+        cellA.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        const cellB = sheet.getCell(`B${r}`);
+        cellB.alignment = { horizontal: 'left', vertical: 'middle' };
+
+        const cellC = sheet.getCell(`C${r}`);
+        cellC.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        // D: Cantitate - aliniat la dreapta
+        const cellD = sheet.getCell(`D${r}`);
+        cellD.alignment = { horizontal: 'right', vertical: 'middle' };
+        if (cellD.value !== null && cellD.value !== undefined && cellD.value !== '') {
+          cellD.numFmt = '#,##0.00';
+        }
+
+        // E: Pret unitar - aliniat la dreapta
+        const cellE = sheet.getCell(`E${r}`);
+        cellE.alignment = { horizontal: 'right', vertical: 'middle' };
+        if (cellE.value !== null && cellE.value !== undefined && cellE.value !== '') {
+          cellE.numFmt = '#,##0.00';
+        }
+
+        // F: Valoare fara tva - aliniat la dreapta
+        const cellF = sheet.getCell(`F${r}`);
+        cellF.alignment = { horizontal: 'right', vertical: 'middle' };
+        cellF.numFmt = '#,##0.00';
+        if (cellF.font && cellF.font.bold) {
+          cellF.font = { ...cellF.font, bold: false };
+        }
+
+        // G: Cod intrare
+        const cellG = sheet.getCell(`G${r}`);
+        cellG.alignment = { horizontal: 'center', vertical: 'middle' };
+      }
+
+      // 3. Totaluri aliniate la dreapta cu format monetar
+      const b37 = sheet.getCell('B37');
       b37.value = 'TOTAL';
       b37.font = { ...(b37.font || {}), name: 'Calibri', size: 10, bold: true };
-      f37.font = { ...(f37.font || {}), name: 'Calibri', size: 10, bold: true };
-      f38.font = { ...(f38.font || {}), name: 'Calibri', size: 8, bold: false };
+      b37.alignment = { horizontal: 'left', vertical: 'middle' };
 
-      for (let r = 15; r <= 36; r++) {
-        const fc = sheet.getCell(`F${r}`);
-        if (fc.font && fc.font.bold) {
-          fc.font = { ...fc.font, bold: false };
-        }
-      }
+      const f37 = sheet.getCell('F37');
+      f37.font = { ...(f37.font || {}), name: 'Calibri', size: 10, bold: true };
+      f37.alignment = { horizontal: 'right', vertical: 'middle' };
+      f37.numFmt = '#,##0.00';
+
+      const f38 = sheet.getCell('F38');
+      f38.font = { ...(f38.font || {}), name: 'Calibri', size: 8, bold: false };
+      f38.alignment = { horizontal: 'right', vertical: 'middle' };
+      f38.numFmt = '#,##0.00';
+
+      sheet.getRow(37).height = 20;
+      sheet.getRow(38).height = 18;
+
       fixedCount++;
     }
   });
   return fixedCount;
+}
+
+export function repairGestiuneFormatting(workbook) {
+  if (!workbook) return false;
+  const gestiuneSheet = getGestiuneSheet(workbook);
+  if (!gestiuneSheet) return false;
+
+  gestiuneSheet.getRow(4).height = 25;
+
+  gestiuneSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    if (rowNumber >= 5) {
+      row.height = 18;
+      const col1Val = String(row.getCell(1).value || '').trim();
+      const isTotal = /TOTAL/i.test(col1Val) || /SUM\s*\(/i.test(row.getCell(7).formula || '') || /SUM\s*\(/i.test(row.getCell(10).formula || '');
+
+      if (isTotal) {
+        row.height = 22;
+        [7, 10, 13, 16].forEach(col => {
+          const cell = row.getCell(col);
+          cell.alignment = { horizontal: 'right', vertical: 'middle' };
+          cell.numFmt = '#,##0.00';
+        });
+      } else {
+        row.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
+        row.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+        row.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+        row.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
+
+        // Toate coloanele numerice (5..16) aliniate la linia din dreapta
+        for (let c = 5; c <= 16; c++) {
+          const cell = row.getCell(c);
+          cell.alignment = { horizontal: 'right', vertical: 'middle' };
+          if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
+            cell.numFmt = '#,##0.00';
+          }
+        }
+      }
+    }
+  });
+  return true;
+}
+
+export function repairAllWorkbookFormatting(workbook) {
+  const nirsCount = repairAllNirSheetsFormatting(workbook);
+  repairGestiuneFormatting(workbook);
+  return nirsCount;
 }
 
 function copySheetStructure(srcSheet, destSheet) {
@@ -610,11 +770,43 @@ function copySheetStructure(srcSheet, destSheet) {
     });
     destRow.commit();
   });
+
+  // Mărit primele 2 rânduri ca să încapă antetul și pe foaia nouă clonată
+  destSheet.getRow(1).height = Math.max(destSheet.getRow(1).height || 0, 26);
+  destSheet.getRow(2).height = Math.max(destSheet.getRow(2).height || 0, 24);
+  destSheet.getRow(3).height = Math.max(destSheet.getRow(3).height || 0, 18);
+  destSheet.getRow(4).height = Math.max(destSheet.getRow(4).height || 0, 18);
+  destSheet.getRow(7).height = Math.max(destSheet.getRow(7).height || 0, 24);
+  destSheet.getRow(14).height = Math.max(destSheet.getRow(14).height || 0, 22);
 }
 
 function setupDefaultNirSheet(sheet) {
+  sheet.columns = [
+    { width: 6 },  // A: nr.crt.
+    { width: 38 }, // B: Denumire produs
+    { width: 8 },  // C: U/M
+    { width: 12 }, // D: Cantitate
+    { width: 14 }, // E: Pret unitar
+    { width: 16 }, // F: Valoare fara tva
+    { width: 12 }  // G: Cod intrare
+  ];
+
+  sheet.getRow(1).height = 26;
+  sheet.getRow(2).height = 24;
+  sheet.getRow(3).height = 18;
+  sheet.getRow(4).height = 18;
+  sheet.getRow(7).height = 24;
+  sheet.getRow(9).height = 20;
+  sheet.getRow(11).height = 20;
+  sheet.getRow(14).height = 22;
+
   sheet.getCell('A1').value = 'S.C. BOCAS PROJECT SRL';
+  sheet.getCell('A1').font = { name: 'Calibri', size: 12, bold: true };
+  sheet.getCell('A2').value = 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850 ,Sediu : B-dul 1Decembrie 1918, Nr.8';
+  sheet.getCell('A2').font = { name: 'Calibri', size: 8.5 };
+
   sheet.getCell('B7').value = 'NOTE DE INTRARE RECEPTIE';
+  sheet.getCell('B7').font = { name: 'Calibri', size: 14, bold: true };
   sheet.getCell('E7').value = 'Nr.';
   sheet.getCell('B9').value = 'Se receptioneaza marfurile furnizate de';
   sheet.getCell('B11').value = 'Conform facturii ';
@@ -628,8 +820,19 @@ function setupDefaultNirSheet(sheet) {
   sheet.getCell('F14').value = 'Valoare fara tva';
   sheet.getCell('G14').value = 'Cod intrare';
 
+  for (let c of ['A14', 'C14', 'D14', 'E14', 'F14', 'G14']) {
+    sheet.getCell(c).alignment = { horizontal: c === 'D14' || c === 'E14' || c === 'F14' ? 'right' : 'center', vertical: 'middle' };
+  }
+
   sheet.getCell('B37').value = 'TOTAL';
   sheet.getCell('B37').font = { name: 'Calibri', size: 10, bold: true };
+  sheet.getCell('B37').alignment = { horizontal: 'left', vertical: 'middle' };
+
   sheet.getCell('F37').font = { name: 'Calibri', size: 10, bold: true };
+  sheet.getCell('F37').alignment = { horizontal: 'right', vertical: 'middle' };
+  sheet.getCell('F37').numFmt = '#,##0.00';
+
   sheet.getCell('F38').font = { name: 'Calibri', size: 8, bold: false };
+  sheet.getCell('F38').alignment = { horizontal: 'right', vertical: 'middle' };
+  sheet.getCell('F38').numFmt = '#,##0.00';
 }

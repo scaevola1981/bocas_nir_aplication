@@ -5,7 +5,7 @@ import { DropZone } from './components/DropZone';
 import { NirReviewModal } from './components/NirReviewModal';
 import { SuccessBanner } from './components/SuccessBanner';
 import { openLocalExcelFile, saveExcelFile, fetchDefaultExcelFile } from './services/fileSystem';
-import { analyzeExcelWorkbook, processInvoiceIntoExcel, getNirSheetContent, checkInvoiceDuplicate } from './services/excelEngine';
+import { analyzeExcelWorkbook, processInvoiceIntoExcel, getNirSheetContent, checkInvoiceDuplicate, repairAllWorkbookFormatting } from './services/excelEngine';
 import { NirViewModal } from './components/NirViewModal';
 import { LiveExcelExplorer } from './components/LiveExcelExplorer';
 import { InstructionsModal } from './components/InstructionsModal';
@@ -308,6 +308,50 @@ export function App() {
     URL.revokeObjectURL(url);
   };
 
+  const [repairingFormatting, setRepairingFormatting] = useState(false);
+
+  const handleRepairFormatting = async () => {
+    if (!excelState.workbook) return;
+    setRepairingFormatting(true);
+    setErrorMsg('');
+    try {
+      const fixedCount = repairAllWorkbookFormatting(excelState.workbook);
+
+      const saveResult = await saveExcelFile(excelState.workbook, {
+        handle: excelState.fileHandle,
+        fileName: excelState.fileName,
+        isLocalApi: excelState.isLocalApi
+      });
+
+      const reAnalysis = await analyzeExcelWorkbook(await excelState.workbook.xlsx.writeBuffer());
+      setExcelState(prev => ({
+        ...prev,
+        sheetsList: reAnalysis.sheetsList,
+        existingInvoices: reAnalysis.existingInvoices,
+        maxNirNum: reAnalysis.maxNirNum,
+        nextNirNum: reAnalysis.nextNirNum,
+        maxCod: reAnalysis.maxCod,
+        nextCod: reAnalysis.nextCod
+      }));
+
+      setSuccessResult({
+        nirSheetName: 'Toate Foile',
+        nextNirNum: excelState.nextNirNum,
+        nirGestiuneCode: '',
+        itemsAdded: 0,
+        fileName: excelState.fileName,
+        savedInPlace: saveResult?.savedInPlace,
+        title: 'Formatare Reparată și Aliniată cu Succes!',
+        customMessage: `Au fost aliniate la dreapta toate cifrele și mărite primele 2 rânduri de antet pe toate cele ${fixedCount} foi NIR și foaia Gestiune.`
+      });
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(`Eroare la repararea formatării: ${err.message}`);
+    } finally {
+      setRepairingFormatting(false);
+    }
+  };
+
   const handleViewSheet = (sheetName) => {
     if (!excelState.workbook) return;
     const nirData = getNirSheetContent(excelState.workbook, sheetName);
@@ -351,6 +395,8 @@ export function App() {
           onDownloadExcel={handleDownloadExcel}
           onViewSheet={handleViewSheet}
           onViewGestiune={handleViewGestiune}
+          onRepairFormatting={handleRepairFormatting}
+          repairing={repairingFormatting}
           loading={loadingExcel}
           error={excelError}
         />
@@ -383,6 +429,8 @@ export function App() {
         <LiveExcelExplorer
           excelState={excelState}
           onDownloadExcel={handleDownloadExcel}
+          onRepairFormatting={handleRepairFormatting}
+          repairing={repairingFormatting}
           activeTab={activeLiveTab}
           onTabChange={setActiveLiveTab}
         />

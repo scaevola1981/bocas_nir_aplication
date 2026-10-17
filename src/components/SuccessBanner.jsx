@@ -13,10 +13,16 @@ export function SuccessBanner({ result, onDismiss }) {
         </div>
         <div>
           <h3 className={styles.title}>
-            {result.nirSheetName} a fost adăugat cu succes în Excel!
+            {result.title || `${result.nirSheetName} a fost adăugat cu succes în Excel!`}
           </h3>
           <p className={styles.details}>
-            S-au înregistrat <strong>{result.itemsAdded} produse</strong> în foaia <code>Gestiune</code> cu codurile <strong>{result.firstCod} - {result.lastCod}</strong> (Cod NIR: <code>{result.nirGestiuneCode}</code>).
+            {result.customMessage ? (
+              result.customMessage
+            ) : (
+              <>
+                S-au înregistrat <strong>{result.itemsAdded} produse</strong> în foaia <code>Gestiune</code> cu codurile <strong>{result.firstCod} - {result.lastCod}</strong> (Cod NIR: <code>{result.nirGestiuneCode}</code>).
+              </>
+            )}
           </p>
           <span className={styles.savedLocation}>
             {result.savedInPlace

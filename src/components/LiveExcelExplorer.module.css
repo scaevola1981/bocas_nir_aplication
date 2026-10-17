@@ -53,6 +53,57 @@
   color: var(--text-main);
 }
 
+.headerBtnGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.repairBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-convex);
+  border: 1.5px solid #10b981;
+  box-shadow: var(--neu-flat-sm);
+  color: #059669;
+  padding: 0.6rem 1.15rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.repairBtn:hover:not(:disabled) {
+  background: #059669;
+  border-color: #ffffff;
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4), var(--neu-flat-hover);
+  transform: translateY(-3px);
+}
+
+.repairBtn:active:not(:disabled) {
+  transform: translateY(2px) scale(0.96);
+  box-shadow: var(--neu-pressed-deep);
+}
+
+.repairBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .downloadBtn {
   display: inline-flex;
   align-items: center;
