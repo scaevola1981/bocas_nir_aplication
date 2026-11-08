@@ -1,4 +1,32 @@
 import ExcelJS from 'exceljs';
+import { BOCAS_LOGO_BASE64 } from './logoAsset.js';
+
+// Helper pentru adaugare logo antet in foaia NIR (in zona E1:G4)
+export function addNirHeaderLogo(workbook, worksheet) {
+  if (!workbook || !worksheet || !BOCAS_LOGO_BASE64) return;
+  try {
+    const existingImages = worksheet.getImages ? worksheet.getImages() : [];
+    if (existingImages && existingImages.length > 0) return;
+
+    const imageId = workbook.addImage({
+      base64: BOCAS_LOGO_BASE64,
+      extension: 'jpeg'
+    });
+    worksheet.addImage(imageId, {
+      tl: { col: 4.2, row: 0.1 },
+      ext: { width: 175, height: 75 }
+    });
+  } catch (err) {
+    console.warn('Nu s-a putut adăuga logo-ul în NIR:', err);
+  }
+}
+
+const NIR_THIN_BORDER = {
+  top: { style: 'thin' },
+  left: { style: 'thin' },
+  bottom: { style: 'thin' },
+  right: { style: 'thin' }
+};
 
 // Helper robust pentru identificarea tab-ului Gestiune (tolerant la litere mari/mici, spații accidentale, prefixe sau tab-ul "G")
 export function getGestiuneSheet(workbook) {
@@ -410,9 +438,12 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
     if (templateSheet) {
       copySheetStructure(templateSheet, newSheet);
     } else {
-      setupDefaultNirSheet(newSheet);
+      setupDefaultNirSheet(newSheet, workbook);
     }
   }
+
+  // Adaugă logo-ul în antetul foii NIR (dacă nu există deja)
+  addNirHeaderLogo(workbook, newSheet);
 
   // 2. Populate NIR Header
   newSheet.getCell('F7').value = nextNirNum;
@@ -420,7 +451,7 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
   newSheet.getCell('D11').value = invoiceNumber;
   newSheet.getCell('F11').value = invoiceDate;
 
-  // 3. Populate NIR Items (rows 15 to 36)
+  // 3. Populate NIR Items (rows 15 to 36) - font strict Arial, marime 8
   let currentCod = nextCod;
   validItems.forEach((item, idx) => {
     const r = 15 + idx;
@@ -438,79 +469,113 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
     const aCell = newSheet.getCell(`A${r}`);
     aCell.value = idx + 1;
     aCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    aCell.font = { name: 'Arial', size: 8 };
+    aCell.border = NIR_THIN_BORDER;
 
     // B: Denumire produs
     const bCell = newSheet.getCell(`B${r}`);
     bCell.value = safeName;
     bCell.alignment = { horizontal: 'left', vertical: 'middle' };
+    bCell.font = { name: 'Arial', size: 8 };
+    bCell.border = NIR_THIN_BORDER;
 
     // C: U/M
     const cCell = newSheet.getCell(`C${r}`);
     cCell.value = item.um || 'BUC.';
-    cCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cCell.alignment = { horizontal: 'left', vertical: 'middle' };
+    cCell.font = { name: 'Arial', size: 8 };
+    cCell.border = NIR_THIN_BORDER;
 
     // D: Cantitate - aliniat la dreapta lângă linia celulei
     const dCell = newSheet.getCell(`D${r}`);
     dCell.value = Number(item.quantity);
     dCell.alignment = { horizontal: 'right', vertical: 'middle' };
+    dCell.font = { name: 'Arial', size: 8 };
     dCell.numFmt = '#,##0.00';
+    dCell.border = NIR_THIN_BORDER;
 
     // E: Preț unitar - aliniat la dreapta lângă linia celulei
     const eCell = newSheet.getCell(`E${r}`);
     eCell.value = effectiveUnitPrice;
     eCell.alignment = { horizontal: 'right', vertical: 'middle' };
+    eCell.font = { name: 'Arial', size: 8 };
     eCell.numFmt = '#,##0.00';
+    eCell.border = NIR_THIN_BORDER;
 
     // F: Valoare fără TVA - aliniat la dreapta lângă linia celulei
     const fCell = newSheet.getCell(`F${r}`);
     fCell.value = { formula: `D${r}*E${r}`, result: Number(item.totalWithoutVat) };
     fCell.alignment = { horizontal: 'right', vertical: 'middle' };
     fCell.numFmt = '#,##0.00';
-    fCell.font = { ...(fCell.font || {}), name: 'Calibri', size: 10, bold: false };
+    fCell.font = { name: 'Arial', size: 8, bold: false };
+    fCell.border = NIR_THIN_BORDER;
 
     // G: Cod intrare
     const gCell = newSheet.getCell(`G${r}`);
     gCell.value = String(currentCod);
     gCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    gCell.font = { name: 'Arial', size: 8 };
+    gCell.border = NIR_THIN_BORDER;
 
     currentCod++;
   });
 
-  // Clear any remaining item rows up to 36 if cloned from a sheet with more rows
+  // Clear any remaining item rows up to 36 with Arial 8 and borders
   for (let r = 15 + validItems.length; r <= 36; r++) {
     const aCell = newSheet.getCell(`A${r}`);
     aCell.value = r - 14;
     aCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    aCell.font = { name: 'Arial', size: 8 };
+    aCell.border = NIR_THIN_BORDER;
 
-    newSheet.getCell(`B${r}`).value = '';
-    newSheet.getCell(`C${r}`).value = '';
+    const bCell = newSheet.getCell(`B${r}`);
+    bCell.value = '';
+    bCell.font = { name: 'Arial', size: 8 };
+    bCell.border = NIR_THIN_BORDER;
+
+    const cCell = newSheet.getCell(`C${r}`);
+    cCell.value = '';
+    cCell.font = { name: 'Arial', size: 8 };
+    cCell.border = NIR_THIN_BORDER;
 
     const dCell = newSheet.getCell(`D${r}`);
     dCell.value = null;
     dCell.alignment = { horizontal: 'right', vertical: 'middle' };
+    dCell.font = { name: 'Arial', size: 8 };
+    dCell.border = NIR_THIN_BORDER;
 
     const eCell = newSheet.getCell(`E${r}`);
     eCell.value = null;
     eCell.alignment = { horizontal: 'right', vertical: 'middle' };
+    eCell.font = { name: 'Arial', size: 8 };
+    eCell.border = NIR_THIN_BORDER;
 
     const fCell = newSheet.getCell(`F${r}`);
-    fCell.value = 0;
+    fCell.value = { formula: `D${r}*E${r}`, result: 0 };
     fCell.alignment = { horizontal: 'right', vertical: 'middle' };
     fCell.numFmt = '#,##0.00';
-    fCell.font = { ...(fCell.font || {}), name: 'Calibri', size: 10, bold: false };
+    fCell.font = { name: 'Arial', size: 8, bold: false };
+    fCell.border = NIR_THIN_BORDER;
 
-    newSheet.getCell(`G${r}`).value = '';
+    const gCell = newSheet.getCell(`G${r}`);
+    gCell.value = '';
+    gCell.font = { name: 'Arial', size: 8 };
+    gCell.border = NIR_THIN_BORDER;
   }
 
-  // NIR Total Formulas & Formatting (Garantăm F37 Bold mărime 10, F38 Normal mărime 8, aliniate la dreapta)
+  // NIR Total Formulas & Formatting (TOTAL Arial 8 bold, F37 Arial 8 bold, F38 Arial 8)
+  ['A', 'B', 'C', 'D', 'E', 'F', 'G'].forEach(col => {
+    newSheet.getCell(`${col}37`).border = NIR_THIN_BORDER;
+  });
+
   const b37Cell = newSheet.getCell('B37');
   b37Cell.value = 'TOTAL';
-  b37Cell.font = { ...(b37Cell.font || {}), name: 'Calibri', size: 10, bold: true };
+  b37Cell.font = { name: 'Arial', size: 8, bold: true };
   b37Cell.alignment = { horizontal: 'left', vertical: 'middle' };
 
   const f37Cell = newSheet.getCell('F37');
   f37Cell.value = { formula: 'SUM(F15:F36)' };
-  f37Cell.font = { ...(f37Cell.font || {}), name: 'Calibri', size: 10, bold: true };
+  f37Cell.font = { name: 'Arial', size: 8, bold: true };
   f37Cell.alignment = { horizontal: 'right', vertical: 'middle' };
   f37Cell.numFmt = '#,##0.00';
   
@@ -520,7 +585,7 @@ export async function processInvoiceIntoExcel(workbook, invoiceData) {
   } else {
     f38Cell.value = { formula: 'F37' };
   }
-  f38Cell.font = { ...(f38Cell.font || {}), name: 'Calibri', size: 8, bold: false };
+  f38Cell.font = { name: 'Arial', size: 8, bold: false };
   f38Cell.alignment = { horizontal: 'right', vertical: 'middle' };
   f38Cell.numFmt = '#,##0.00';
 
@@ -629,74 +694,164 @@ export function repairAllNirSheetsFormatting(workbook) {
   workbook.eachSheet((sheet) => {
     const match = sheet.name.trim().match(/^(?:Nir\s*)?([0-9]+)$/i);
     if (match) {
-      // 1. Mărit primele 2 rânduri ca să încapă antetul firmei și sediul fără să fie tăiate
-      sheet.getRow(1).height = 26; // S.C. BOCAS PROJECT SRL
-      sheet.getRow(2).height = 24; // Nr.R.C./Aut, C.U.I., Sediu
-      sheet.getRow(3).height = 18; // Cont IBAN
-      sheet.getRow(4).height = 18; // Tel.Fax, mobil, mail
-      sheet.getRow(7).height = 24; // NOTE DE INTRARE RECEPTIE
-      sheet.getRow(9).height = 20; // Furnizor
-      sheet.getRow(11).height = 20; // Conform facturii ... din ...
-      sheet.getRow(14).height = 22; // Cap tabel (nr.crt., Denumire...)
+      // 1. Lățimi coloane identice cu NIR-model.xlsx
+      sheet.getColumn(1).width = 6.11;
+      sheet.getColumn(2).width = 29.0;
+      sheet.getColumn(3).width = 5.0;
+      sheet.getColumn(4).width = 10.5;
+      sheet.getColumn(5).width = 9.5;
+      sheet.getColumn(6).width = 10.5;
+      sheet.getColumn(7).width = 9.0;
 
-      // 2. Aliniere cifre în căsuțe lângă linia din dreapta pentru toate rândurile 15..36
+      // 2. Înălțimi rânduri conform modelului oficial
+      sheet.getRow(1).height = 20.4;
+      sheet.getRow(2).height = 18;
+      sheet.getRow(3).height = 18;
+      sheet.getRow(4).height = 18;
+      sheet.getRow(7).height = 20.4;
+      sheet.getRow(8).height = 22.8;
+      sheet.getRow(9).height = 18;
+      sheet.getRow(11).height = 18;
+      sheet.getRow(13).height = 15;
+      sheet.getRow(14).height = 15;
+
+      // 3. Antet firmă complet (Liniile 1..4) cu font strict Arial
+      const a1 = sheet.getCell('A1');
+      if (!a1.value || !String(a1.value).trim()) a1.value = 'S.C. BOCAS PROJECT SRL';
+      a1.font = { name: 'Arial', size: 14, bold: true };
+
+      const a2 = sheet.getCell('A2');
+      if (!a2.value || !String(a2.value).trim()) a2.value = 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850  ,Sediu : B-dul 1Decembrie 1918, Nr.8,  ';
+      a2.font = { name: 'Arial', size: 8 };
+
+      const a3 = sheet.getCell('A3');
+      if (!a3.value || !String(a3.value).trim()) a3.value = 'Cont IBAN    RO 07 RNCB 0079 0614 9233 0001 Banca             B.C.R. TITAN';
+      a3.font = { name: 'Arial', size: 8 };
+
+      const a4 = sheet.getCell('A4');
+      if (!a4.value || !String(a4.value).trim()) a4.value = 'Tel.Fax.   0213456135 ; mobil 0721456653    Maill :  bocas.project@gmail.com';
+      a4.font = { name: 'Arial', size: 8 };
+
+      // Inserare logo în antet (E1:G4)
+      addNirHeaderLogo(workbook, sheet);
+
+      // 4. Detalii NIR (rândurile 7, 9, 11) - font Arial
+      const b7 = sheet.getCell('B7');
+      b7.font = { name: 'Arial', size: 14, bold: true };
+      b7.alignment = { horizontal: 'left', vertical: 'middle' };
+
+      const e7 = sheet.getCell('E7');
+      e7.font = { name: 'Arial', size: 14, bold: true };
+      e7.alignment = { horizontal: 'right', vertical: 'middle' };
+
+      const f7 = sheet.getCell('F7');
+      f7.font = { name: 'Arial', size: 14, bold: true };
+      f7.alignment = { horizontal: 'left', vertical: 'middle' };
+
+      const b9 = sheet.getCell('B9');
+      b9.font = { name: 'Arial', size: 8 };
+      b9.alignment = { horizontal: 'left', vertical: 'middle' };
+
+      const e9 = sheet.getCell('E9');
+      e9.font = { name: 'Arial', size: 8, bold: true };
+      e9.alignment = { horizontal: 'left', vertical: 'middle' };
+
+      const b11 = sheet.getCell('B11');
+      b11.font = { name: 'Arial', size: 8 };
+      b11.alignment = { horizontal: 'left', vertical: 'middle' };
+
+      const d11 = sheet.getCell('D11');
+      d11.font = { name: 'Arial', size: 8 };
+      d11.alignment = { horizontal: 'left', vertical: 'middle' };
+
+      const e11 = sheet.getCell('E11');
+      e11.font = { name: 'Arial', size: 8 };
+      e11.alignment = { horizontal: 'right', vertical: 'middle' };
+
+      const f11 = sheet.getCell('F11');
+      f11.font = { name: 'Arial', size: 8 };
+      f11.alignment = { horizontal: 'left', vertical: 'middle' };
+
+      // 5. Cap tabel Rând 14 (Arial 8 bold cu chenare)
+      const headers = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+      headers.forEach(col => {
+        const cell = sheet.getCell(`${col}14`);
+        cell.font = { name: 'Arial', size: 8, bold: true };
+        cell.border = NIR_THIN_BORDER;
+      });
+
+      // 6. Rândurile de produse 15..36 (strict Arial, mărime 8, numere aliniate la dreapta, chenar complet)
       for (let r = 15; r <= 36; r++) {
         sheet.getRow(r).height = 18;
 
         const cellA = sheet.getCell(`A${r}`);
+        cellA.font = { name: 'Arial', size: 8 };
         cellA.alignment = { horizontal: 'center', vertical: 'middle' };
+        cellA.border = NIR_THIN_BORDER;
 
         const cellB = sheet.getCell(`B${r}`);
+        cellB.font = { name: 'Arial', size: 8 };
         cellB.alignment = { horizontal: 'left', vertical: 'middle' };
+        cellB.border = NIR_THIN_BORDER;
 
         const cellC = sheet.getCell(`C${r}`);
-        cellC.alignment = { horizontal: 'center', vertical: 'middle' };
+        cellC.font = { name: 'Arial', size: 8 };
+        cellC.alignment = { horizontal: 'left', vertical: 'middle' };
+        cellC.border = NIR_THIN_BORDER;
 
         // D: Cantitate - aliniat la dreapta
         const cellD = sheet.getCell(`D${r}`);
+        cellD.font = { name: 'Arial', size: 8 };
         cellD.alignment = { horizontal: 'right', vertical: 'middle' };
+        cellD.border = NIR_THIN_BORDER;
         if (cellD.value !== null && cellD.value !== undefined && cellD.value !== '') {
           cellD.numFmt = '#,##0.00';
         }
 
         // E: Pret unitar - aliniat la dreapta
         const cellE = sheet.getCell(`E${r}`);
+        cellE.font = { name: 'Arial', size: 8 };
         cellE.alignment = { horizontal: 'right', vertical: 'middle' };
+        cellE.border = NIR_THIN_BORDER;
         if (cellE.value !== null && cellE.value !== undefined && cellE.value !== '') {
           cellE.numFmt = '#,##0.00';
         }
 
         // F: Valoare fara tva - aliniat la dreapta
         const cellF = sheet.getCell(`F${r}`);
+        cellF.font = { name: 'Arial', size: 8, bold: false };
         cellF.alignment = { horizontal: 'right', vertical: 'middle' };
+        cellF.border = NIR_THIN_BORDER;
         cellF.numFmt = '#,##0.00';
-        if (cellF.font && cellF.font.bold) {
-          cellF.font = { ...cellF.font, bold: false };
-        }
 
         // G: Cod intrare
         const cellG = sheet.getCell(`G${r}`);
+        cellG.font = { name: 'Arial', size: 8 };
         cellG.alignment = { horizontal: 'center', vertical: 'middle' };
+        cellG.border = NIR_THIN_BORDER;
       }
 
-      // 3. Totaluri aliniate la dreapta cu format monetar
+      // 7. Totaluri aliniate la dreapta cu format monetar și chenar
+      sheet.getRow(37).height = 20;
+      headers.forEach(col => {
+        sheet.getCell(`${col}37`).border = NIR_THIN_BORDER;
+      });
+
       const b37 = sheet.getCell('B37');
       b37.value = 'TOTAL';
-      b37.font = { ...(b37.font || {}), name: 'Calibri', size: 10, bold: true };
+      b37.font = { name: 'Arial', size: 8, bold: true };
       b37.alignment = { horizontal: 'left', vertical: 'middle' };
 
       const f37 = sheet.getCell('F37');
-      f37.font = { ...(f37.font || {}), name: 'Calibri', size: 10, bold: true };
+      f37.font = { name: 'Arial', size: 8, bold: true };
       f37.alignment = { horizontal: 'right', vertical: 'middle' };
       f37.numFmt = '#,##0.00';
 
+      sheet.getRow(38).height = 18;
       const f38 = sheet.getCell('F38');
-      f38.font = { ...(f38.font || {}), name: 'Calibri', size: 8, bold: false };
+      f38.font = { name: 'Arial', size: 8, bold: false };
       f38.alignment = { horizontal: 'right', vertical: 'middle' };
       f38.numFmt = '#,##0.00';
-
-      sheet.getRow(37).height = 20;
-      sheet.getRow(38).height = 18;
 
       fixedCount++;
     }
@@ -710,6 +865,10 @@ export function repairGestiuneFormatting(workbook) {
   if (!gestiuneSheet) return false;
 
   gestiuneSheet.getRow(4).height = 25;
+  for (let c = 1; c <= 16; c++) {
+    const cell = gestiuneSheet.getRow(4).getCell(c);
+    cell.font = { name: 'Arial', size: 8, bold: true };
+  }
 
   gestiuneSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
     if (rowNumber >= 5) {
@@ -719,20 +878,26 @@ export function repairGestiuneFormatting(workbook) {
 
       if (isTotal) {
         row.height = 22;
+        row.getCell(1).font = { name: 'Arial', size: 8, bold: true };
         [7, 10, 13, 16].forEach(col => {
           const cell = row.getCell(col);
+          cell.font = { name: 'Arial', size: 8, bold: true };
           cell.alignment = { horizontal: 'right', vertical: 'middle' };
           cell.numFmt = '#,##0.00';
         });
       } else {
+        row.getCell(1).font = { name: 'Arial', size: 8 };
         row.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
-        row.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-        row.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
-        row.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
 
-        // Toate coloanele numerice (5..16) aliniate la linia din dreapta
+        for (let c = 2; c <= 4; c++) {
+          row.getCell(c).font = { name: 'Arial', size: 8 };
+          row.getCell(c).alignment = { horizontal: 'center', vertical: 'middle' };
+        }
+
+        // Toate coloanele numerice (5..16) aliniate la linia din dreapta cu font Arial 8
         for (let c = 5; c <= 16; c++) {
           const cell = row.getCell(c);
+          cell.font = { name: 'Arial', size: 8 };
           cell.alignment = { horizontal: 'right', vertical: 'middle' };
           if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
             cell.numFmt = '#,##0.00';
@@ -771,68 +936,122 @@ function copySheetStructure(srcSheet, destSheet) {
     destRow.commit();
   });
 
-  // Mărit primele 2 rânduri ca să încapă antetul și pe foaia nouă clonată
-  destSheet.getRow(1).height = Math.max(destSheet.getRow(1).height || 0, 26);
-  destSheet.getRow(2).height = Math.max(destSheet.getRow(2).height || 0, 24);
-  destSheet.getRow(3).height = Math.max(destSheet.getRow(3).height || 0, 18);
-  destSheet.getRow(4).height = Math.max(destSheet.getRow(4).height || 0, 18);
-  destSheet.getRow(7).height = Math.max(destSheet.getRow(7).height || 0, 24);
-  destSheet.getRow(14).height = Math.max(destSheet.getRow(14).height || 0, 22);
+  // Înălțimi standardizate conform modelului oficial
+  destSheet.getRow(1).height = 20.4;
+  destSheet.getRow(2).height = 18;
+  destSheet.getRow(3).height = 18;
+  destSheet.getRow(4).height = 18;
+  destSheet.getRow(7).height = 20.4;
+  destSheet.getRow(14).height = 15;
 }
 
-function setupDefaultNirSheet(sheet) {
+function setupDefaultNirSheet(sheet, workbook) {
   sheet.columns = [
-    { width: 6 },  // A: nr.crt.
-    { width: 38 }, // B: Denumire produs
-    { width: 8 },  // C: U/M
-    { width: 12 }, // D: Cantitate
-    { width: 14 }, // E: Pret unitar
-    { width: 16 }, // F: Valoare fara tva
-    { width: 12 }  // G: Cod intrare
+    { width: 6.11 }, // A: nr.crt.
+    { width: 29.0 }, // B: Denumire produs
+    { width: 5.0 },  // C: U/M
+    { width: 10.5 }, // D: Cantitate
+    { width: 9.5 },  // E: Pret unitar
+    { width: 10.5 }, // F: Valoare fara tva
+    { width: 9.0 }   // G: Cod intrare
   ];
 
-  sheet.getRow(1).height = 26;
-  sheet.getRow(2).height = 24;
+  sheet.getRow(1).height = 20.4;
+  sheet.getRow(2).height = 18;
   sheet.getRow(3).height = 18;
   sheet.getRow(4).height = 18;
-  sheet.getRow(7).height = 24;
-  sheet.getRow(9).height = 20;
-  sheet.getRow(11).height = 20;
-  sheet.getRow(14).height = 22;
+  sheet.getRow(7).height = 20.4;
+  sheet.getRow(8).height = 22.8;
+  sheet.getRow(9).height = 18;
+  sheet.getRow(11).height = 18;
+  sheet.getRow(13).height = 15;
+  sheet.getRow(14).height = 15;
 
   sheet.getCell('A1').value = 'S.C. BOCAS PROJECT SRL';
-  sheet.getCell('A1').font = { name: 'Calibri', size: 12, bold: true };
-  sheet.getCell('A2').value = 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850 ,Sediu : B-dul 1Decembrie 1918, Nr.8';
-  sheet.getCell('A2').font = { name: 'Calibri', size: 8.5 };
+  sheet.getCell('A1').font = { name: 'Arial', size: 14, bold: true };
 
-  sheet.getCell('B7').value = 'NOTE DE INTRARE RECEPTIE';
-  sheet.getCell('B7').font = { name: 'Calibri', size: 14, bold: true };
-  sheet.getCell('E7').value = 'Nr.';
-  sheet.getCell('B9').value = 'Se receptioneaza marfurile furnizate de';
-  sheet.getCell('B11').value = 'Conform facturii ';
-  sheet.getCell('E11').value = 'din';
-  
-  sheet.getCell('A14').value = 'nr.crt.';
-  sheet.getCell('B14').value = 'Denumire produs';
-  sheet.getCell('C14').value = 'U/M';
-  sheet.getCell('D14').value = 'Cantitate';
-  sheet.getCell('E14').value = 'Pret unitar';
-  sheet.getCell('F14').value = 'Valoare fara tva';
-  sheet.getCell('G14').value = 'Cod intrare';
+  sheet.getCell('A2').value = 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850  ,Sediu : B-dul 1Decembrie 1918, Nr.8,  ';
+  sheet.getCell('A2').font = { name: 'Arial', size: 8 };
 
-  for (let c of ['A14', 'C14', 'D14', 'E14', 'F14', 'G14']) {
-    sheet.getCell(c).alignment = { horizontal: c === 'D14' || c === 'E14' || c === 'F14' ? 'right' : 'center', vertical: 'middle' };
+  sheet.getCell('A3').value = 'Cont IBAN    RO 07 RNCB 0079 0614 9233 0001 Banca             B.C.R. TITAN';
+  sheet.getCell('A3').font = { name: 'Arial', size: 8 };
+
+  sheet.getCell('A4').value = 'Tel.Fax.   0213456135 ; mobil 0721456653    Maill :  bocas.project@gmail.com';
+  sheet.getCell('A4').font = { name: 'Arial', size: 8 };
+
+  if (workbook) {
+    addNirHeaderLogo(workbook, sheet);
   }
 
+  sheet.getCell('B7').value = 'NOTE DE INTRARE RECEPTIE';
+  sheet.getCell('B7').font = { name: 'Arial', size: 14, bold: true };
+  sheet.getCell('B7').alignment = { horizontal: 'left', vertical: 'middle' };
+
+  sheet.getCell('E7').value = 'Nr.';
+  sheet.getCell('E7').font = { name: 'Arial', size: 14, bold: true };
+  sheet.getCell('E7').alignment = { horizontal: 'right', vertical: 'middle' };
+
+  sheet.getCell('B9').value = 'Se receptioneaza marfurile furnizate de';
+  sheet.getCell('B9').font = { name: 'Arial', size: 8 };
+  sheet.getCell('B9').alignment = { horizontal: 'left', vertical: 'middle' };
+
+  sheet.getCell('B11').value = 'Conform facturii ';
+  sheet.getCell('B11').font = { name: 'Arial', size: 8 };
+  sheet.getCell('B11').alignment = { horizontal: 'left', vertical: 'middle' };
+
+  sheet.getCell('E11').value = 'din';
+  sheet.getCell('E11').font = { name: 'Arial', size: 8 };
+  sheet.getCell('E11').alignment = { horizontal: 'right', vertical: 'middle' };
+  
+  const headers = [
+    { col: 'A', text: 'nr.crt.', align: 'center' },
+    { col: 'B', text: 'Denumire produs', align: 'left' },
+    { col: 'C', text: 'U/M', align: 'left' },
+    { col: 'D', text: 'Cantitate', align: 'left' },
+    { col: 'E', text: 'Pret unitar', align: 'left' },
+    { col: 'F', text: 'Valoare fara tva', align: 'left' },
+    { col: 'G', text: 'Cod intrare', align: 'left' }
+  ];
+  headers.forEach(h => {
+    const cell = sheet.getCell(`${h.col}14`);
+    cell.value = h.text;
+    cell.font = { name: 'Arial', size: 8, bold: true };
+    cell.alignment = { horizontal: h.align, vertical: 'middle' };
+    cell.border = NIR_THIN_BORDER;
+  });
+
+  for (let r = 15; r <= 36; r++) {
+    sheet.getRow(r).height = 18;
+    ['A', 'B', 'C', 'D', 'E', 'F', 'G'].forEach(col => {
+      const cell = sheet.getCell(`${col}${r}`);
+      cell.border = NIR_THIN_BORDER;
+      cell.font = { name: 'Arial', size: 8 };
+      if (col === 'A') {
+        cell.value = r - 14;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      } else if (col === 'F') {
+        cell.value = { formula: `D${r}*E${r}`, result: 0 };
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        cell.numFmt = '#,##0.00';
+      }
+    });
+  }
+
+  sheet.getRow(37).height = 20;
+  ['A', 'B', 'C', 'D', 'E', 'F', 'G'].forEach(col => {
+    sheet.getCell(`${col}37`).border = NIR_THIN_BORDER;
+  });
   sheet.getCell('B37').value = 'TOTAL';
-  sheet.getCell('B37').font = { name: 'Calibri', size: 10, bold: true };
+  sheet.getCell('B37').font = { name: 'Arial', size: 8, bold: true };
   sheet.getCell('B37').alignment = { horizontal: 'left', vertical: 'middle' };
 
-  sheet.getCell('F37').font = { name: 'Calibri', size: 10, bold: true };
+  sheet.getCell('F37').value = { formula: 'SUM(F15:F36)' };
+  sheet.getCell('F37').font = { name: 'Arial', size: 8, bold: true };
   sheet.getCell('F37').alignment = { horizontal: 'right', vertical: 'middle' };
   sheet.getCell('F37').numFmt = '#,##0.00';
 
-  sheet.getCell('F38').font = { name: 'Calibri', size: 8, bold: false };
+  sheet.getRow(38).height = 18;
+  sheet.getCell('F38').font = { name: 'Arial', size: 8, bold: false };
   sheet.getCell('F38').alignment = { horizontal: 'right', vertical: 'middle' };
   sheet.getCell('F38').numFmt = '#,##0.00';
 }
