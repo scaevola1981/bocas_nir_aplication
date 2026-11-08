@@ -1,36 +1,36 @@
 {
-  "id": "/",
+  "id": "./",
   "short_name": "e-Factura NIR",
   "name": "Bocas Project - Gestiune e-Factură & Generare NIR",
   "description": "Aplicație desktop pentru gestiunea automată a e-Facturilor și generarea de NIR-uri Excel",
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "./favicon.png",
       "type": "image/png",
       "sizes": "64x64",
       "purpose": "any"
     },
     {
-      "src": "/icon-192.png",
+      "src": "./icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "./icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
     },
     {
-      "src": "/app-icon.png",
+      "src": "./app-icon.png",
       "type": "image/png",
       "sizes": "1024x1024",
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "background_color": "#d3dbe6",
   "theme_color": "#0284c7",
   "display": "standalone",

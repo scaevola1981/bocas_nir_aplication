@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  base: '/',
+  base: './',
   plugins: [react()],
   resolve: {
     alias: {
@@ -21,8 +21,7 @@ export default defineConfig({
     open: true
   },
   optimizeDeps: {
-    include: ['exceljs', 'fast-xml-parser'],
-    exclude: ['pdfjs-dist']
+    include: ['exceljs', 'fast-xml-parser', 'pdfjs-dist']
   },
   build: {
     chunkSizeWarningLimit: 2000,

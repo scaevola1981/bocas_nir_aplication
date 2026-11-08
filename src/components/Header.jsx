@@ -51,7 +51,7 @@ export function Header({ excelConnected, excelFileName, nextNir, nextCod, onOpen
       <div className={styles.container}>
         <div className={styles.brand}>
           <div className={styles.logoIcon}>
-            <img src="/app-icon.png" alt="Bocas Project Logo" className={styles.logoImg} />
+            <img src={`${import.meta.env.BASE_URL}app-icon.png`} alt="Bocas Project Logo" className={styles.logoImg} />
           </div>
           <div>
             <h1 className={styles.title}>Gestiune e-Factură & NIR</h1>
@@ -128,7 +128,7 @@ export function Header({ excelConnected, excelFileName, nextNir, nextCod, onOpen
             <div className={styles.guideHeader}>
               <div className={styles.guideTitleGroup}>
                 <div className={styles.guideLogoBox}>
-                  <img src="/app-icon.png" alt="Bocas Logo" className={styles.guideLogoImg} />
+                  <img src={`${import.meta.env.BASE_URL}app-icon.png`} alt="Bocas Logo" className={styles.guideLogoImg} />
                 </div>
                 <div>
                   <h3>Instalează ca Aplicație pe Desktop</h3>

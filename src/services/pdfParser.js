@@ -1,8 +1,15 @@
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsModule from 'pdfjs-dist';
 import { cleanSupplierName, mapUnitCode } from './xmlParser.js';
 
-// Worker 100% local (fără cereri externe către CDN, pentru confidențialitate totală offline)
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+// Compatibilitate atât pentru Vite Dev (ESM/UMD) cât și pentru Build Producție / Desktop
+const pdfjsLib = pdfjsModule?.GlobalWorkerOptions
+  ? pdfjsModule
+  : (pdfjsModule?.default || globalThis.pdfjsLib || window.pdfjsLib);
+
+// Worker 100% local (fără cereri externe către CDN, compatibil cu GitHub Pages și rute sub-director)
+if (pdfjsLib?.GlobalWorkerOptions) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.js`;
+}
 
 export async function parseInvoicePdf(arrayBuffer) {
   const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });

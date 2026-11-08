@@ -1,5 +1,5 @@
 // Service Worker for Bocas Project PWA Desktop App
-const CACHE_NAME = 'bocas-pwa-v4';
+const CACHE_NAME = 'bocas-pwa-v5';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -40,7 +40,7 @@ self.addEventListener('fetch', (event) => {
           return cachedResponse;
         }
         if (event.request.mode === 'navigate') {
-          const cachedIndex = await caches.match('/');
+          const cachedIndex = (await caches.match('./')) || (await caches.match('/'));
           if (cachedIndex) return cachedIndex;
         }
         return new Response('Rețeaua nu este disponibilă.', {

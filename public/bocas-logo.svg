@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 680" width="100%" height="100%">
+  <defs>
+    <!-- Gradient pentru corpul literei B (stanga bleumarin inchis -> dreapta albastru electric) -->
+    <linearGradient id="ref-b-grad" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#052357" />
+      <stop offset="35%" stop-color="#093b84" />
+      <stop offset="75%" stop-color="#0072ce" />
+      <stop offset="100%" stop-color="#0099f2" />
+    </linearGradient>
+
+    <!-- Gradient pentru arcul orbital stanga-jos -->
+    <linearGradient id="ref-left-arc" x1="0%" y1="30%" x2="100%" y2="90%">
+      <stop offset="0%" stop-color="#08387e" />
+      <stop offset="50%" stop-color="#062f6b" />
+      <stop offset="100%" stop-color="#0068be" />
+    </linearGradient>
+
+    <!-- Gradient pentru arcul orbital dreapta-jos -->
+    <linearGradient id="ref-right-arc" x1="10%" y1="100%" x2="95%" y2="0%">
+      <stop offset="0%" stop-color="#052a62" />
+      <stop offset="45%" stop-color="#0074d4" />
+      <stop offset="85%" stop-color="#00a2ff" />
+      <stop offset="100%" stop-color="#0088e6" />
+    </linearGradient>
+
+    <!-- Gradient pentru textul BOCAS -->
+    <linearGradient id="ref-bocas-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#08326e" />
+      <stop offset="50%" stop-color="#0c428c" />
+      <stop offset="100%" stop-color="#072d66" />
+    </linearGradient>
+
+    <!-- Bratul fulgului mare din interiorul literei B -->
+    <g id="ref-flake-arm">
+      <line x1="0" y1="0" x2="0" y2="-66" stroke="#0088e8" stroke-width="11" stroke-linecap="round" />
+      <polyline points="-19,-37 0,-22 19,-37" fill="none" stroke="#0088e8" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round" />
+      <polyline points="-14,-56 0,-44 14,-56" fill="none" stroke="#0088e8" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+
+    <!-- Bratul fulgului mic de pe linia separatoare -->
+    <g id="ref-small-flake-arm">
+      <line x1="0" y1="0" x2="0" y2="-22" stroke="#0084e0" stroke-width="4" stroke-linecap="round" />
+      <polyline points="-7,-13 0,-8 7,-13" fill="none" stroke="#0084e0" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+      <polyline points="-5,-19 0,-15 5,-19" fill="none" stroke="#0084e0" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+  </defs>
+
+  <!-- Fundal negru identic cu referinta -->
+  <rect width="1024" height="680" fill="#000000" />
+
+  <!-- EMBLEMA B + FULG + INELE ORBITALE -->
+  <g transform="translate(0, 6)">
+    <!-- Litera B cu fereastra patrata pe stanga si decupaje rotunjite pe dreapta -->
+    <path fill-rule="evenodd" d="
+      M 346,38
+      L 546,38
+      C 608,38 640,68 640,108
+      C 640,136 620,156 590,164
+      C 618,172 634,193 634,220
+      C 634,256 600,280 538,280
+      L 346,280
+      Z
+      M 398,74
+      L 520,74
+      C 562,74 584,96 584,124
+      C 584,146 568,160 542,164
+      C 568,169 584,184 584,207
+      C 584,234 560,254 518,254
+      L 398,254
+      Z
+    " fill="url(#ref-b-grad)" />
+
+    <!-- Fulgul de zapada din interiorul literei B -->
+    <g transform="translate(480, 164)">
+      <use href="#ref-flake-arm" transform="rotate(0)" />
+      <use href="#ref-flake-arm" transform="rotate(60)" />
+      <use href="#ref-flake-arm" transform="rotate(120)" />
+      <use href="#ref-flake-arm" transform="rotate(180)" />
+      <use href="#ref-flake-arm" transform="rotate(240)" />
+      <use href="#ref-flake-arm" transform="rotate(300)" />
+    </g>
+
+    <!-- Arcul orbital stanga-jos -->
+    <path d="
+      M 339,144
+      C 262,188 225,244 266,282
+      C 305,318 424,312 528,274
+      C 432,294 342,292 314,256
+      C 295,232 308,188 339,144
+      Z
+    " fill="url(#ref-left-arc)" />
+
+    <!-- Arcul orbital mare dreapta-jos -->
+    <path d="
+      M 632,68
+      C 742,60 798,108 756,166
+      C 716,222 596,286 458,300
+      C 568,312 638,286 642,244
+      C 698,208 738,164 732,124
+      C 726,88 688,70 632,68
+      Z
+    " fill="url(#ref-right-arc)" />
+  </g>
+
+  <!-- TEXT: BOCAS (extins orizontal ca in original) -->
+  <g transform="translate(512, 412) scale(1.36, 1)">
+    <text x="0" y="0" text-anchor="middle" font-family="'Arial Black', 'Montserrat', 'Helvetica Neue', sans-serif" font-size="102" font-weight="900" letter-spacing="6" fill="url(#ref-bocas-grad)">BOCAS</text>
+  </g>
+
+  <!-- TEXT: PROJECT -->
+  <g transform="translate(512, 488) scale(1.22, 1)">
+    <text x="0" y="0" text-anchor="middle" font-family="'Arial Black', 'Montserrat', 'Helvetica Neue', sans-serif" font-size="56" font-weight="900" letter-spacing="14" fill="#0084e0">PROJECT</text>
+  </g>
+
+  <!-- LINIE SEPARATOARE + FULG CENTRAL -->
+  <line x1="170" y1="528" x2="467" y2="528" stroke="#0084e0" stroke-width="5.5" stroke-linecap="round" />
+  <g transform="translate(512, 528)">
+    <use href="#ref-small-flake-arm" transform="rotate(0)" />
+    <use href="#ref-small-flake-arm" transform="rotate(60)" />
+    <use href="#ref-small-flake-arm" transform="rotate(120)" />
+    <use href="#ref-small-flake-arm" transform="rotate(180)" />
+    <use href="#ref-small-flake-arm" transform="rotate(240)" />
+    <use href="#ref-small-flake-arm" transform="rotate(300)" />
+  </g>
+  <line x1="555" y1="528" x2="854" y2="528" stroke="#0084e0" stroke-width="5.5" stroke-linecap="round" />
+
+  <!-- SUBTITLU: Instalatii frigorifice -->
+  <text x="512" y="592" text-anchor="middle" font-family="'Segoe UI', 'Arial', sans-serif" font-size="54" font-weight="800" fill="#0c448e">Instalații frigorifice</text>
+
+  <!-- SUBTITLU 2: proiectare, executie, montaj, -->
+  <text x="512" y="638" text-anchor="middle" font-family="'Segoe UI', 'Arial', sans-serif" font-size="40" font-weight="600" letter-spacing="1.2" fill="#0a3c7c">proiectare, execuție, montaj,</text>
+</svg>
+
