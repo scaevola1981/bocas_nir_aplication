@@ -1,8 +1,14 @@
 // Service Worker for Bocas Project PWA Desktop App
-const CACHE_NAME = 'bocas-pwa-v6';
+const CACHE_NAME = 'bocas-pwa-v7';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', (event) => {

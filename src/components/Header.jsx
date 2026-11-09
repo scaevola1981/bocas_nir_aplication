@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, DownloadCloud, X, CheckCircle2, Laptop, HelpCircle, Sun, Moon } from 'lucide-react';
+import { ShieldCheck, DownloadCloud, X, CheckCircle2, Laptop, HelpCircle, Sun, Moon, Sparkles } from 'lucide-react';
 import styles from './Header.module.css';
 
-export function Header({ excelConnected, excelFileName, nextNir, nextCod, onOpenHelp, theme, onToggleTheme }) {
+export function Header({ excelConnected, excelFileName, nextNir, nextCod, onOpenHelp, theme, onToggleTheme, hasUpdate, onOpenUpdateModal }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -81,6 +81,19 @@ export function Header({ excelConnected, excelFileName, nextNir, nextCod, onOpen
           >
             <HelpCircle size={18} />
           </button>
+
+          {/* Notificare vizibilă dacă a apărut o nouă versiune a aplicației */}
+          {hasUpdate && (
+            <button
+              type="button"
+              className={styles.updateAvailableBtn}
+              onClick={onOpenUpdateModal}
+              title="A apărut o versiune nouă a programului! Apasă pentru actualizare."
+            >
+              <Sparkles size={16} />
+              <span>Versiune nouă</span>
+            </button>
+          )}
 
           {/* Buton instalare pe Desktop ca aplicație normală */}
           {!isInstalled ? (

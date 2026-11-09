@@ -13,6 +13,8 @@ import { parseInvoicePdf } from './services/pdfParser';
 import { parseInvoiceXml } from './services/xmlParser';
 import { DevOpsMonitor } from './components/DevOpsMonitor';
 import { recordIncident } from './services/localHealthStore';
+import { initUpdateManager, applyAppUpdate } from './services/updateManager';
+import { UpdateModal } from './components/UpdateModal';
 import { Info, HelpCircle } from 'lucide-react';
 import styles from './App.module.css';
 
@@ -48,6 +50,16 @@ export function App() {
   const [successResult, setSuccessResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [inspectedNir, setInspectedNir] = useState(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [hasUpdate, setHasUpdate] = useState(false);
+
+  // Monitorizare automată a noilor versiuni lansate pe server
+  useEffect(() => {
+    initUpdateManager(() => {
+      setHasUpdate(true);
+      setShowUpdateModal(true);
+    });
+  }, []);
 
   // Dark / Light Theme state cu persistență în localStorage
   const [theme, setTheme] = useState(() => {
@@ -368,6 +380,8 @@ export function App() {
         onOpenHelp={() => setShowHelpModal(true)}
         theme={theme}
         onToggleTheme={handleToggleTheme}
+        hasUpdate={hasUpdate}
+        onOpenUpdateModal={() => setShowUpdateModal(true)}
       />
 
       {activeView === 'devops' ? (
@@ -463,6 +477,13 @@ export function App() {
       <InstructionsModal
         isOpen={showHelpModal}
         onClose={() => setShowHelpModal(false)}
+      />
+
+      {/* Notificare de Actualizare Versiune Nouă (PWA / Web) */}
+      <UpdateModal
+        isOpen={showUpdateModal}
+        onClose={() => setShowUpdateModal(false)}
+        onConfirmUpdate={applyAppUpdate}
       />
     </div>
   );
