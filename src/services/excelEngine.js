@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import { BOCAS_LOGO_BASE64 } from './logoAsset.js';
 
-// Helper pentru adaugare logo antet in foaia NIR (pe STÂNGA, in zona A1:B4)
+// Helper pentru adaugare logo antet in foaia NIR (pe STÂNGA, umple exact caseta A1:C5)
 export function addNirHeaderLogo(workbook, worksheet) {
   if (!workbook || !worksheet || !BOCAS_LOGO_BASE64) return;
   try {
@@ -12,9 +12,11 @@ export function addNirHeaderLogo(workbook, worksheet) {
       base64: BOCAS_LOGO_BASE64,
       extension: 'jpeg'
     });
+    // Umple exact spațiul marcat A1:C5 (orizontal până la coloana D, vertical până la rândul 5)
     worksheet.addImage(imageId, {
-      tl: { col: 0.15, row: 0.1 },
-      ext: { width: 175, height: 75 }
+      tl: { col: 0, row: 0 },
+      br: { col: 3, row: 5 },
+      editAs: 'twoCell'
     });
   } catch (err) {
     console.warn('Nu s-a putut adăuga logo-ul în NIR:', err);
@@ -708,6 +710,7 @@ export function repairAllNirSheetsFormatting(workbook) {
       sheet.getRow(2).height = 18;
       sheet.getRow(3).height = 18;
       sheet.getRow(4).height = 18;
+      sheet.getRow(5).height = 18;
       sheet.getRow(7).height = 20.4;
       sheet.getRow(8).height = 22.8;
       sheet.getRow(9).height = 18;
@@ -715,17 +718,16 @@ export function repairAllNirSheetsFormatting(workbook) {
       sheet.getRow(13).height = 15;
       sheet.getRow(14).height = 15;
 
-      // 3. Swap Antet: Logo pe Stânga (A1:B4) și Datele Firmei pe Dreapta (D1:G4)
+      // 3. Swap Antet: Logo pe Stânga (A1:C5) și Datele Firmei pe Dreapta (D1:G4)
       const prevA1 = sheet.getCell('A1').value;
       const prevA2 = sheet.getCell('A2').value;
       const prevA3 = sheet.getCell('A3').value;
       const prevA4 = sheet.getCell('A4').value;
       const prevD1 = sheet.getCell('D1').value;
 
-      sheet.getCell('A1').value = null;
-      sheet.getCell('A2').value = null;
-      sheet.getCell('A3').value = null;
-      sheet.getCell('A4').value = null;
+      ['A1','A2','A3','A4','A5','B1','B2','B3','B4','B5','C1','C2','C3','C4','C5'].forEach(addr => {
+        sheet.getCell(addr).value = null;
+      });
 
       const d1 = sheet.getCell('D1');
       d1.value = (prevD1 && String(prevD1).trim()) || (prevA1 && String(prevA1).trim()) || 'S.C. BOCAS PROJECT SRL';
@@ -995,6 +997,7 @@ function setupDefaultNirSheet(sheet, workbook) {
   sheet.getRow(2).height = 18;
   sheet.getRow(3).height = 18;
   sheet.getRow(4).height = 18;
+  sheet.getRow(5).height = 18;
   sheet.getRow(7).height = 20.4;
   sheet.getRow(8).height = 22.8;
   sheet.getRow(9).height = 18;
@@ -1002,10 +1005,9 @@ function setupDefaultNirSheet(sheet, workbook) {
   sheet.getRow(13).height = 15;
   sheet.getRow(14).height = 15;
 
-  sheet.getCell('A1').value = null;
-  sheet.getCell('A2').value = null;
-  sheet.getCell('A3').value = null;
-  sheet.getCell('A4').value = null;
+  ['A1','A2','A3','A4','A5','B1','B2','B3','B4','B5','C1','C2','C3','C4','C5'].forEach(addr => {
+    sheet.getCell(addr).value = null;
+  });
 
   sheet.getCell('D1').value = 'S.C. BOCAS PROJECT SRL';
   sheet.getCell('D1').font = { name: 'Arial', size: 14, bold: true };
