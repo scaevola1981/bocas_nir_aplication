@@ -37,7 +37,13 @@ export function UpdateModal({ isOpen, onClose, onConfirmUpdate }) {
             <li>
               <CheckCircle2 size={16} color="#16a34a" className={styles.checkIcon} />
               <span>
-                <strong>Logo transparent & aliniere antet:</strong> Logo-ul Bocas Project are acum fundal 100% transparent (fără chenar negru), iar datele firmei (denumire, Reg. Com, CUI, sediu, IBAN, contact) sunt încadrate pe rândurile 1-5 exact la aceeași înălțime cu logo-ul.
+                <strong>Icon nou oficial al aplicației:</strong> Identitate vizuală modernizată cu monograma 3D „B” Bocas Project în stil premium macOS squircle din titan și accente neon.
+              </span>
+            </li>
+            <li>
+              <CheckCircle2 size={16} color="#16a34a" className={styles.checkIcon} />
+              <span>
+                <strong>Logo transparent & aliniere antet:</strong> Logo-ul Bocas Project are fundal 100% transparent (fără chenar negru), iar datele firmei sunt încadrate pe rândurile 1-5 exact la aceeași înălțime cu logo-ul.
               </span>
             </li>
             <li>
