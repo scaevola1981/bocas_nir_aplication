@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import { BOCAS_LOGO_BASE64 } from './logoAsset.js';
 
-// Helper pentru adaugare logo antet in foaia NIR (pe STÂNGA, umple exact caseta A1:C5)
+// Helper pentru adaugare logo antet in foaia NIR (pe STÂNGA, umple exact caseta A1:C5 cu background transparent)
 export function addNirHeaderLogo(workbook, worksheet) {
   if (!workbook || !worksheet || !BOCAS_LOGO_BASE64) return;
   try {
@@ -10,7 +10,7 @@ export function addNirHeaderLogo(workbook, worksheet) {
 
     const imageId = workbook.addImage({
       base64: BOCAS_LOGO_BASE64,
-      extension: 'jpeg'
+      extension: 'png'
     });
     // Umple exact spațiul marcat A1:C5 (orizontal până la coloana D, vertical până la rândul 5)
     worksheet.addImage(imageId, {
@@ -20,6 +20,112 @@ export function addNirHeaderLogo(workbook, worksheet) {
     });
   } catch (err) {
     console.warn('Nu s-a putut adăuga logo-ul în NIR:', err);
+  }
+}
+
+// Helper pentru formatarea și încadrarea antetului NIR:
+// Logo pe stânga (A1:C5, transparent) și datele firmei pe dreapta (D1:D5), ambele pe aceeași înălțime (rândurile 1-5)
+export function applyNirHeaderLayout(sheet, workbook) {
+  if (!sheet) return;
+
+  // 1. Înălțimi rânduri antet 1..5 pentru a se alinia perfect cu înălțimea logo-ului (A1:C5)
+  sheet.getRow(1).height = 20.4;
+  sheet.getRow(2).height = 17;
+  sheet.getRow(3).height = 17;
+  sheet.getRow(4).height = 17;
+  sheet.getRow(5).height = 17;
+
+  // 2. Extragere text existent dacă foaia conține deja date
+  const prevA1 = sheet.getCell('A1').value;
+  const prevA2 = sheet.getCell('A2').value;
+  const prevA3 = sheet.getCell('A3').value;
+  const prevA4 = sheet.getCell('A4').value;
+  const prevA5 = sheet.getCell('A5').value;
+
+  const prevD1 = sheet.getCell('D1').value;
+  const prevD2 = sheet.getCell('D2').value;
+  const prevD3 = sheet.getCell('D3').value;
+  const prevD4 = sheet.getCell('D4').value;
+  const prevD5 = sheet.getCell('D5').value;
+
+  // 3. Curățare celule din zona logo-ului (A1:C5) pentru un background curat
+  ['A1','A2','A3','A4','A5','B1','B2','B3','B4','B5','C1','C2','C3','C4','C5'].forEach(addr => {
+    sheet.getCell(addr).value = null;
+  });
+
+  // 4. Încadrare text date firmă pe 5 rânduri (D1..D5) exact la aceeași înălțime cu logo-ul:
+  // D1: Denumire firmă (Arial 14 Bold)
+  const d1 = sheet.getCell('D1');
+  d1.value = (prevD1 && String(prevD1).trim()) || (prevA1 && String(prevA1).trim()) || 'S.C. BOCAS PROJECT SRL';
+  d1.font = { name: 'Arial', size: 14, bold: true };
+  d1.alignment = { vertical: 'middle', horizontal: 'left' };
+
+  // D2: Reg. Com. & C.U.I. (Arial 8)
+  let regVal = 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850';
+  let sediuVal = 'Sediu : B-dul 1Decembrie 1918, Nr.8';
+
+  const rawRow2 = (prevD2 && String(prevD2).trim()) || (prevA2 && String(prevA2).trim()) || '';
+  if (rawRow2.includes('Sediu')) {
+    const parts = rawRow2.split(/[,;\s]+Sediu\s*:\s*/i);
+    if (parts[0] && parts[0].trim()) {
+      regVal = parts[0].replace(/[,;\s]+$/, '').trim();
+    }
+    if (parts[1] && parts[1].trim()) {
+      sediuVal = 'Sediu : ' + parts[1].replace(/[,;\s]+$/, '').trim();
+    }
+  } else if (rawRow2) {
+    regVal = rawRow2;
+  }
+  const d2 = sheet.getCell('D2');
+  d2.value = regVal;
+  d2.font = { name: 'Arial', size: 8 };
+  d2.alignment = { vertical: 'middle', horizontal: 'left' };
+
+  // D3: Sediu (Arial 8)
+  const d3 = sheet.getCell('D3');
+  if (prevD3 && String(prevD3).trim() && !String(prevD3).includes('IBAN')) {
+    sediuVal = String(prevD3).trim();
+  } else if (prevA3 && String(prevA3).trim() && !String(prevA3).includes('IBAN')) {
+    sediuVal = String(prevA3).trim();
+  }
+  d3.value = sediuVal;
+  d3.font = { name: 'Arial', size: 8 };
+  d3.alignment = { vertical: 'middle', horizontal: 'left' };
+
+  // D4: Cont IBAN & Banca (Arial 8)
+  const d4 = sheet.getCell('D4');
+  let ibanVal = 'Cont IBAN    RO 07 RNCB 0079 0614 9233 0001 Banca             B.C.R. TITAN';
+  if (prevD4 && String(prevD4).includes('IBAN')) {
+    ibanVal = String(prevD4).trim();
+  } else if (prevD3 && String(prevD3).includes('IBAN')) {
+    ibanVal = String(prevD3).trim();
+  } else if (prevA3 && String(prevA3).includes('IBAN')) {
+    ibanVal = String(prevA3).trim();
+  }
+  d4.value = ibanVal;
+  d4.font = { name: 'Arial', size: 8 };
+  d4.alignment = { vertical: 'middle', horizontal: 'left' };
+
+  // D5: Contact Tel / Mobil / Email (Arial 8)
+  const d5 = sheet.getCell('D5');
+  let contactVal = 'Tel.Fax.   0213456135 ; mobil 0721456653    Maill :  bocas.project@gmail.com';
+  if (prevD5 && String(prevD5).trim()) {
+    contactVal = String(prevD5).trim();
+  } else if (prevD4 && (String(prevD4).includes('Tel') || String(prevD4).includes('mobil'))) {
+    contactVal = String(prevD4).trim();
+  } else if (prevA4 && (String(prevA4).includes('Tel') || String(prevA4).includes('mobil'))) {
+    contactVal = String(prevA4).trim();
+  } else if (prevA5 && String(prevA5).trim()) {
+    contactVal = String(prevA5).trim();
+  }
+  d5.value = contactVal;
+  d5.font = { name: 'Arial', size: 8 };
+  d5.alignment = { vertical: 'middle', horizontal: 'left' };
+
+  // 5. Inserare logo pe stânga A1:C5 cu background transparent
+  const targetWb = workbook || sheet.workbook;
+  if (targetWb) {
+    addNirHeaderLogo(targetWb, sheet);
   }
 }
 
@@ -706,11 +812,6 @@ export function repairAllNirSheetsFormatting(workbook) {
       sheet.getColumn(7).width = 9.0;
 
       // 2. Înălțimi rânduri conform modelului oficial
-      sheet.getRow(1).height = 20.4;
-      sheet.getRow(2).height = 18;
-      sheet.getRow(3).height = 18;
-      sheet.getRow(4).height = 18;
-      sheet.getRow(5).height = 18;
       sheet.getRow(7).height = 20.4;
       sheet.getRow(8).height = 22.8;
       sheet.getRow(9).height = 18;
@@ -718,35 +819,8 @@ export function repairAllNirSheetsFormatting(workbook) {
       sheet.getRow(13).height = 15;
       sheet.getRow(14).height = 15;
 
-      // 3. Swap Antet: Logo pe Stânga (A1:C5) și Datele Firmei pe Dreapta (D1:G4)
-      const prevA1 = sheet.getCell('A1').value;
-      const prevA2 = sheet.getCell('A2').value;
-      const prevA3 = sheet.getCell('A3').value;
-      const prevA4 = sheet.getCell('A4').value;
-      const prevD1 = sheet.getCell('D1').value;
-
-      ['A1','A2','A3','A4','A5','B1','B2','B3','B4','B5','C1','C2','C3','C4','C5'].forEach(addr => {
-        sheet.getCell(addr).value = null;
-      });
-
-      const d1 = sheet.getCell('D1');
-      d1.value = (prevD1 && String(prevD1).trim()) || (prevA1 && String(prevA1).trim()) || 'S.C. BOCAS PROJECT SRL';
-      d1.font = { name: 'Arial', size: 14, bold: true };
-
-      const d2 = sheet.getCell('D2');
-      d2.value = (prevA2 && String(prevA2).trim()) || 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850  ,Sediu : B-dul 1Decembrie 1918, Nr.8,  ';
-      d2.font = { name: 'Arial', size: 8 };
-
-      const d3 = sheet.getCell('D3');
-      d3.value = (prevA3 && String(prevA3).trim()) || 'Cont IBAN    RO 07 RNCB 0079 0614 9233 0001 Banca             B.C.R. TITAN';
-      d3.font = { name: 'Arial', size: 8 };
-
-      const d4 = sheet.getCell('D4');
-      d4.value = (prevA4 && String(prevA4).trim()) || 'Tel.Fax.   0213456135 ; mobil 0721456653    Maill :  bocas.project@gmail.com';
-      d4.font = { name: 'Arial', size: 8 };
-
-      // Inserare logo pe stânga (A1:B4)
-      addNirHeaderLogo(workbook, sheet);
+      // 3. Antet NIR: Logo transparent pe stânga (A1:C5) și datele firmei pe dreapta (D1:D5) la aceeași înălțime
+      applyNirHeaderLayout(sheet, workbook);
 
       // 4. Detalii NIR (rândurile 7, 9, 11) - font Arial
       const b7 = sheet.getCell('B7');
@@ -950,36 +1024,11 @@ function copySheetStructure(srcSheet, destSheet) {
   });
 
   // Înălțimi standardizate conform modelului oficial
-  destSheet.getRow(1).height = 20.4;
-  destSheet.getRow(2).height = 18;
-  destSheet.getRow(3).height = 18;
-  destSheet.getRow(4).height = 18;
   destSheet.getRow(7).height = 20.4;
   destSheet.getRow(14).height = 15;
 
-  // Asigură swap antet pe foaia nouă clonată: curăță A1..A4 și plasează datele pe D1..D4
-  const prevA1 = destSheet.getCell('A1').value;
-  const prevA2 = destSheet.getCell('A2').value;
-  const prevA3 = destSheet.getCell('A3').value;
-  const prevA4 = destSheet.getCell('A4').value;
-  const prevD1 = destSheet.getCell('D1').value;
-
-  destSheet.getCell('A1').value = null;
-  destSheet.getCell('A2').value = null;
-  destSheet.getCell('A3').value = null;
-  destSheet.getCell('A4').value = null;
-
-  destSheet.getCell('D1').value = (prevD1 && String(prevD1).trim()) || (prevA1 && String(prevA1).trim()) || 'S.C. BOCAS PROJECT SRL';
-  destSheet.getCell('D1').font = { name: 'Arial', size: 14, bold: true };
-
-  destSheet.getCell('D2').value = (prevA2 && String(prevA2).trim()) || 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850  ,Sediu : B-dul 1Decembrie 1918, Nr.8,  ';
-  destSheet.getCell('D2').font = { name: 'Arial', size: 8 };
-
-  destSheet.getCell('D3').value = (prevA3 && String(prevA3).trim()) || 'Cont IBAN    RO 07 RNCB 0079 0614 9233 0001 Banca             B.C.R. TITAN';
-  destSheet.getCell('D3').font = { name: 'Arial', size: 8 };
-
-  destSheet.getCell('D4').value = (prevA4 && String(prevA4).trim()) || 'Tel.Fax.   0213456135 ; mobil 0721456653    Maill :  bocas.project@gmail.com';
-  destSheet.getCell('D4').font = { name: 'Arial', size: 8 };
+  // Antet NIR: Logo transparent pe stânga (A1:C5) și datele firmei pe dreapta (D1:D5) la aceeași înălțime
+  applyNirHeaderLayout(destSheet, destSheet.workbook || srcSheet.workbook);
 }
 
 function setupDefaultNirSheet(sheet, workbook) {
@@ -993,11 +1042,6 @@ function setupDefaultNirSheet(sheet, workbook) {
     { width: 9.0 }   // G: Cod intrare
   ];
 
-  sheet.getRow(1).height = 20.4;
-  sheet.getRow(2).height = 18;
-  sheet.getRow(3).height = 18;
-  sheet.getRow(4).height = 18;
-  sheet.getRow(5).height = 18;
   sheet.getRow(7).height = 20.4;
   sheet.getRow(8).height = 22.8;
   sheet.getRow(9).height = 18;
@@ -1005,25 +1049,8 @@ function setupDefaultNirSheet(sheet, workbook) {
   sheet.getRow(13).height = 15;
   sheet.getRow(14).height = 15;
 
-  ['A1','A2','A3','A4','A5','B1','B2','B3','B4','B5','C1','C2','C3','C4','C5'].forEach(addr => {
-    sheet.getCell(addr).value = null;
-  });
-
-  sheet.getCell('D1').value = 'S.C. BOCAS PROJECT SRL';
-  sheet.getCell('D1').font = { name: 'Arial', size: 14, bold: true };
-
-  sheet.getCell('D2').value = 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850  ,Sediu : B-dul 1Decembrie 1918, Nr.8,  ';
-  sheet.getCell('D2').font = { name: 'Arial', size: 8 };
-
-  sheet.getCell('D3').value = 'Cont IBAN    RO 07 RNCB 0079 0614 9233 0001 Banca             B.C.R. TITAN';
-  sheet.getCell('D3').font = { name: 'Arial', size: 8 };
-
-  sheet.getCell('D4').value = 'Tel.Fax.   0213456135 ; mobil 0721456653    Maill :  bocas.project@gmail.com';
-  sheet.getCell('D4').font = { name: 'Arial', size: 8 };
-
-  if (workbook) {
-    addNirHeaderLogo(workbook, sheet);
-  }
+  // Antet NIR: Logo transparent pe stânga (A1:C5) și datele firmei pe dreapta (D1:D5) la aceeași înălțime
+  applyNirHeaderLayout(sheet, workbook);
 
   sheet.getCell('B7').value = 'NOTE DE INTRARE RECEPTIE';
   sheet.getCell('B7').font = { name: 'Arial', size: 14, bold: true };

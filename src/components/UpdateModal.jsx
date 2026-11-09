@@ -37,7 +37,7 @@ export function UpdateModal({ isOpen, onClose, onConfirmUpdate }) {
             <li>
               <CheckCircle2 size={16} color="#16a34a" className={styles.checkIcon} />
               <span>
-                <strong>Antet NIR oficial actualizat:</strong> Logo-ul Bocas Project este poziționat pe stânga (umple caseta A1:C5 până la coloana D), iar datele firmei sunt aranjate pe dreapta.
+                <strong>Logo transparent & aliniere antet:</strong> Logo-ul Bocas Project are acum fundal 100% transparent (fără chenar negru), iar datele firmei (denumire, Reg. Com, CUI, sediu, IBAN, contact) sunt încadrate pe rândurile 1-5 exact la aceeași înălțime cu logo-ul.
               </span>
             </li>
             <li>
