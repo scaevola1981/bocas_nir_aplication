@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, RefreshCw, X, ShieldCheck } from 'lucide-react';
+import { Sparkles, RefreshCw, X, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import styles from './UpdateModal.module.css';
 
 export function UpdateModal({ isOpen, onClose, onConfirmUpdate }) {
@@ -25,8 +25,35 @@ export function UpdateModal({ isOpen, onClose, onConfirmUpdate }) {
 
         <h3 className={styles.title}>Versiune Nouă Disponibilă!</h3>
         <p className={styles.subtitle}>
-          A fost publicată o actualizare pentru <strong>Gestiune e-Factură & NIR</strong> cu optimizări și îmbunătățiri recente (inclusiv noile modele de NIR și antetul actualizat).
+          A fost publicată o actualizare pentru <strong>Gestiune e-Factură & NIR</strong> cu următoarele noutăți și optimizări:
         </p>
+
+        <div className={styles.changesCard}>
+          <div className={styles.changesHeader}>
+            <Sparkles size={14} color="#0284c7" />
+            <span>Noutăți în această versiune:</span>
+          </div>
+          <ul className={styles.changesList}>
+            <li>
+              <CheckCircle2 size={16} color="#16a34a" className={styles.checkIcon} />
+              <span>
+                <strong>Antet NIR oficial actualizat:</strong> Logo-ul Bocas Project este poziționat pe stânga (umple caseta A1:C5 până la coloana D), iar datele firmei sunt aranjate pe dreapta.
+              </span>
+            </li>
+            <li>
+              <CheckCircle2 size={16} color="#16a34a" className={styles.checkIcon} />
+              <span>
+                <strong>Formatare strictă Arial 8:</strong> Toate rândurile NIR, chenarele subțiri și valorile aliniate la dreapta respectă 100% modelul Excel de gestiune.
+              </span>
+            </li>
+            <li>
+              <CheckCircle2 size={16} color="#16a34a" className={styles.checkIcon} />
+              <span>
+                <strong>Actualizare automată dintr-un click:</strong> Programul se reîncarcă instant cu noua versiune fără să mai fie nevoie de curățarea manuală a memoriei cache.
+              </span>
+            </li>
+          </ul>
+        </div>
 
         <div className={styles.infoBox}>
           <ShieldCheck size={18} color="#16a34a" />

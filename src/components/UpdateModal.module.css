@@ -24,7 +24,7 @@
   border: var(--neu-border);
   border-radius: var(--radius-xl);
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
   padding: 2.25rem 2rem 1.75rem 2rem;
   box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.35), var(--neu-flat);
   position: relative;
@@ -99,6 +99,57 @@
 
 .subtitle strong {
   color: var(--text-main);
+}
+
+.changesCard {
+  width: 100%;
+  background: var(--bg-convex);
+  border: var(--neu-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.15rem;
+  margin-bottom: 1.15rem;
+  box-shadow: var(--neu-flat-xs);
+  text-align: left;
+}
+
+.changesHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.75rem;
+}
+
+.changesList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.changesList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.835rem;
+  color: var(--text-sub);
+  line-height: 1.45;
+}
+
+.changesList li strong {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.checkIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .infoBox {
@@ -195,6 +246,11 @@
 [data-theme="dark"] .iconCircle {
   background: #0f2b48 !important;
   border-color: #0284c7 !important;
+}
+
+[data-theme="dark"] .changesCard {
+  background: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 [data-theme="dark"] .laterBtn:hover:not(:disabled) {
