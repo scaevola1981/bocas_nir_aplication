@@ -1,19 +1,19 @@
 import ExcelJS from 'exceljs';
 import { BOCAS_LOGO_BASE64 } from './logoAsset.js';
 
-// Helper pentru adaugare logo antet in foaia NIR (in zona E1:G4)
+// Helper pentru adaugare logo antet in foaia NIR (pe STÂNGA, in zona A1:B4)
 export function addNirHeaderLogo(workbook, worksheet) {
   if (!workbook || !worksheet || !BOCAS_LOGO_BASE64) return;
   try {
-    const existingImages = worksheet.getImages ? worksheet.getImages() : [];
-    if (existingImages && existingImages.length > 0) return;
+    // Resetăm media de pe foaie pentru a preveni dublarea sau poziția veche din dreapta
+    worksheet._media = [];
 
     const imageId = workbook.addImage({
       base64: BOCAS_LOGO_BASE64,
       extension: 'jpeg'
     });
     worksheet.addImage(imageId, {
-      tl: { col: 4.2, row: 0.1 },
+      tl: { col: 0.15, row: 0.1 },
       ext: { width: 175, height: 75 }
     });
   } catch (err) {
@@ -715,24 +715,35 @@ export function repairAllNirSheetsFormatting(workbook) {
       sheet.getRow(13).height = 15;
       sheet.getRow(14).height = 15;
 
-      // 3. Antet firmă complet (Liniile 1..4) cu font strict Arial
-      const a1 = sheet.getCell('A1');
-      if (!a1.value || !String(a1.value).trim()) a1.value = 'S.C. BOCAS PROJECT SRL';
-      a1.font = { name: 'Arial', size: 14, bold: true };
+      // 3. Swap Antet: Logo pe Stânga (A1:B4) și Datele Firmei pe Dreapta (D1:G4)
+      const prevA1 = sheet.getCell('A1').value;
+      const prevA2 = sheet.getCell('A2').value;
+      const prevA3 = sheet.getCell('A3').value;
+      const prevA4 = sheet.getCell('A4').value;
+      const prevD1 = sheet.getCell('D1').value;
 
-      const a2 = sheet.getCell('A2');
-      if (!a2.value || !String(a2.value).trim()) a2.value = 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850  ,Sediu : B-dul 1Decembrie 1918, Nr.8,  ';
-      a2.font = { name: 'Arial', size: 8 };
+      sheet.getCell('A1').value = null;
+      sheet.getCell('A2').value = null;
+      sheet.getCell('A3').value = null;
+      sheet.getCell('A4').value = null;
 
-      const a3 = sheet.getCell('A3');
-      if (!a3.value || !String(a3.value).trim()) a3.value = 'Cont IBAN    RO 07 RNCB 0079 0614 9233 0001 Banca             B.C.R. TITAN';
-      a3.font = { name: 'Arial', size: 8 };
+      const d1 = sheet.getCell('D1');
+      d1.value = (prevD1 && String(prevD1).trim()) || (prevA1 && String(prevA1).trim()) || 'S.C. BOCAS PROJECT SRL';
+      d1.font = { name: 'Arial', size: 14, bold: true };
 
-      const a4 = sheet.getCell('A4');
-      if (!a4.value || !String(a4.value).trim()) a4.value = 'Tel.Fax.   0213456135 ; mobil 0721456653    Maill :  bocas.project@gmail.com';
-      a4.font = { name: 'Arial', size: 8 };
+      const d2 = sheet.getCell('D2');
+      d2.value = (prevA2 && String(prevA2).trim()) || 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850  ,Sediu : B-dul 1Decembrie 1918, Nr.8,  ';
+      d2.font = { name: 'Arial', size: 8 };
 
-      // Inserare logo în antet (E1:G4)
+      const d3 = sheet.getCell('D3');
+      d3.value = (prevA3 && String(prevA3).trim()) || 'Cont IBAN    RO 07 RNCB 0079 0614 9233 0001 Banca             B.C.R. TITAN';
+      d3.font = { name: 'Arial', size: 8 };
+
+      const d4 = sheet.getCell('D4');
+      d4.value = (prevA4 && String(prevA4).trim()) || 'Tel.Fax.   0213456135 ; mobil 0721456653    Maill :  bocas.project@gmail.com';
+      d4.font = { name: 'Arial', size: 8 };
+
+      // Inserare logo pe stânga (A1:B4)
       addNirHeaderLogo(workbook, sheet);
 
       // 4. Detalii NIR (rândurile 7, 9, 11) - font Arial
@@ -943,6 +954,30 @@ function copySheetStructure(srcSheet, destSheet) {
   destSheet.getRow(4).height = 18;
   destSheet.getRow(7).height = 20.4;
   destSheet.getRow(14).height = 15;
+
+  // Asigură swap antet pe foaia nouă clonată: curăță A1..A4 și plasează datele pe D1..D4
+  const prevA1 = destSheet.getCell('A1').value;
+  const prevA2 = destSheet.getCell('A2').value;
+  const prevA3 = destSheet.getCell('A3').value;
+  const prevA4 = destSheet.getCell('A4').value;
+  const prevD1 = destSheet.getCell('D1').value;
+
+  destSheet.getCell('A1').value = null;
+  destSheet.getCell('A2').value = null;
+  destSheet.getCell('A3').value = null;
+  destSheet.getCell('A4').value = null;
+
+  destSheet.getCell('D1').value = (prevD1 && String(prevD1).trim()) || (prevA1 && String(prevA1).trim()) || 'S.C. BOCAS PROJECT SRL';
+  destSheet.getCell('D1').font = { name: 'Arial', size: 14, bold: true };
+
+  destSheet.getCell('D2').value = (prevA2 && String(prevA2).trim()) || 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850  ,Sediu : B-dul 1Decembrie 1918, Nr.8,  ';
+  destSheet.getCell('D2').font = { name: 'Arial', size: 8 };
+
+  destSheet.getCell('D3').value = (prevA3 && String(prevA3).trim()) || 'Cont IBAN    RO 07 RNCB 0079 0614 9233 0001 Banca             B.C.R. TITAN';
+  destSheet.getCell('D3').font = { name: 'Arial', size: 8 };
+
+  destSheet.getCell('D4').value = (prevA4 && String(prevA4).trim()) || 'Tel.Fax.   0213456135 ; mobil 0721456653    Maill :  bocas.project@gmail.com';
+  destSheet.getCell('D4').font = { name: 'Arial', size: 8 };
 }
 
 function setupDefaultNirSheet(sheet, workbook) {
@@ -967,17 +1002,22 @@ function setupDefaultNirSheet(sheet, workbook) {
   sheet.getRow(13).height = 15;
   sheet.getRow(14).height = 15;
 
-  sheet.getCell('A1').value = 'S.C. BOCAS PROJECT SRL';
-  sheet.getCell('A1').font = { name: 'Arial', size: 14, bold: true };
+  sheet.getCell('A1').value = null;
+  sheet.getCell('A2').value = null;
+  sheet.getCell('A3').value = null;
+  sheet.getCell('A4').value = null;
 
-  sheet.getCell('A2').value = 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850  ,Sediu : B-dul 1Decembrie 1918, Nr.8,  ';
-  sheet.getCell('A2').font = { name: 'Arial', size: 8 };
+  sheet.getCell('D1').value = 'S.C. BOCAS PROJECT SRL';
+  sheet.getCell('D1').font = { name: 'Arial', size: 14, bold: true };
 
-  sheet.getCell('A3').value = 'Cont IBAN    RO 07 RNCB 0079 0614 9233 0001 Banca             B.C.R. TITAN';
-  sheet.getCell('A3').font = { name: 'Arial', size: 8 };
+  sheet.getCell('D2').value = 'Nr.R.C./Aut: J40/15128/2006, C.U.I.: RO 19039850  ,Sediu : B-dul 1Decembrie 1918, Nr.8,  ';
+  sheet.getCell('D2').font = { name: 'Arial', size: 8 };
 
-  sheet.getCell('A4').value = 'Tel.Fax.   0213456135 ; mobil 0721456653    Maill :  bocas.project@gmail.com';
-  sheet.getCell('A4').font = { name: 'Arial', size: 8 };
+  sheet.getCell('D3').value = 'Cont IBAN    RO 07 RNCB 0079 0614 9233 0001 Banca             B.C.R. TITAN';
+  sheet.getCell('D3').font = { name: 'Arial', size: 8 };
+
+  sheet.getCell('D4').value = 'Tel.Fax.   0213456135 ; mobil 0721456653    Maill :  bocas.project@gmail.com';
+  sheet.getCell('D4').font = { name: 'Arial', size: 8 };
 
   if (workbook) {
     addNirHeaderLogo(workbook, sheet);
